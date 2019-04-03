@@ -39,12 +39,21 @@ public class InsertionSortedArrayListUnitTest {
 	}
 
 	@Test
-	public void shouldContainElementsInOrderInsertion() {
+	public void shouldContainElementsInOrderAfterInsertion() {
 		listUnderTest.add(SOME_OBJECT);
 		listUnderTest.add(SOME_SMALLER_OBJECT);
 		final Iterator<Integer> elements = listUnderTest.iterator();
 		assertEquals(SOME_SMALLER_OBJECT, elements.next());
 		assertEquals(SOME_OBJECT, elements.next());
+	}
+
+	@Test
+	public void shouldContainElementsInOrderAfterInsertionFromCollection() {
+		listUnderTest.addAll(asList(SOME_OBJECT, SOME_SMALLER_OBJECT, SOME_LARGER_OBJECT));
+		final Iterator<Integer> elements = listUnderTest.iterator();
+		assertEquals(SOME_SMALLER_OBJECT, elements.next());
+		assertEquals(SOME_OBJECT, elements.next());
+		assertEquals(SOME_LARGER_OBJECT, elements.next());
 	}
 
 	@Test(expected = UnsupportedMethodException.class)
