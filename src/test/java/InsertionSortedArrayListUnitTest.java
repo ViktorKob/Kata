@@ -1,8 +1,8 @@
-package sorting;
+package test.java;
 
 public class InsertionSortedArrayListUnitTest {
 
-	@Test
+	@Test(expected=)
 	private void shouldRejectAddAllAtIndex() {
 		
 	}
