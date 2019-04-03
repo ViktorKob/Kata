@@ -7,7 +7,7 @@
 	<groupId>net.thomas.kata</groupId>
 	<artifactId>kata</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<packaging>pom</packaging>
+	<packaging>jar</packaging>
 
 
 	<properties>

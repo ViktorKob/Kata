@@ -1,4 +1,4 @@
-package main.java.sorting;
+package net.thomas.kata.exceptions;
 
 public class UnsupportedMethodException extends RuntimeException {
 	private static final long serialVersionUID = 1L;

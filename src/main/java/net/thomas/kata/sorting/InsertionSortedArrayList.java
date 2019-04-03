@@ -1,7 +1,9 @@
-package main.java.sorting;
+package net.thomas.kata.sorting;
 
 import java.util.ArrayList;
 import java.util.Collection;
+
+import net.thomas.kata.exceptions.UnsupportedMethodException;
 
 public class InsertionSortedArrayList<CONTENT_TYPE> extends ArrayList<CONTENT_TYPE> {
 	private static final long serialVersionUID = 1L;
