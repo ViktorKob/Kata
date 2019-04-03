@@ -5,11 +5,17 @@ import java.util.Collection;
 
 import net.thomas.kata.exceptions.UnsupportedMethodException;
 
-public class InsertionSortedArrayList<CONTENT_TYPE> extends ArrayList<CONTENT_TYPE> {
+public class InsertionSortedArrayList<CONTENT_TYPE extends Comparable<CONTENT_TYPE>> extends ArrayList<CONTENT_TYPE> {
 	private static final long serialVersionUID = 1L;
 
 	@Override
 	public boolean add(CONTENT_TYPE element) {
+		for (int i = 0; i < size(); i++) {
+			if (get(i).compareTo(element) > 0) {
+				super.add(i, element);
+				return true;
+			}
+		}
 		super.add(element);
 		return true;
 	}

@@ -2,8 +2,10 @@ package net.thomas.kata.sorting;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptySet;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Iterator;
 import java.util.Set;
 
 import org.junit.Before;
@@ -34,6 +36,15 @@ public class InsertionSortedArrayListUnitTest {
 		listUnderTest.addAll(asList(SOME_OBJECT, SOME_LARGER_OBJECT));
 		assertTrue(listUnderTest.contains(SOME_OBJECT));
 		assertTrue(listUnderTest.contains(SOME_LARGER_OBJECT));
+	}
+
+	@Test
+	public void shouldContainElementsInOrderInsertion() {
+		listUnderTest.add(SOME_OBJECT);
+		listUnderTest.add(SOME_SMALLER_OBJECT);
+		final Iterator<Integer> elements = listUnderTest.iterator();
+		assertEquals(SOME_SMALLER_OBJECT, elements.next());
+		assertEquals(SOME_OBJECT, elements.next());
 	}
 
 	@Test(expected = UnsupportedMethodException.class)
