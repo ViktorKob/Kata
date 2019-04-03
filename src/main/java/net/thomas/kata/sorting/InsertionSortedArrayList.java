@@ -8,34 +8,32 @@ import net.thomas.kata.exceptions.UnsupportedMethodException;
 public class InsertionSortedArrayList<CONTENT_TYPE> extends ArrayList<CONTENT_TYPE> {
 	private static final long serialVersionUID = 1L;
 
-	private final ArrayList<CONTENT_TYPE> contents;
-
-	public InsertionSortedArrayList() {
-		contents = new ArrayList<>();
+	@Override
+	public boolean add(CONTENT_TYPE element) {
+		super.add(element);
+		return true;
 	}
 
 	@Override
-	public boolean add(CONTENT_TYPE e) {
-		return false;
+	public boolean addAll(Collection<? extends CONTENT_TYPE> elements) {
+		for (final CONTENT_TYPE element : elements) {
+			add(element);
+		}
+		return true;
 	}
 
 	@Override
-	public boolean addAll(Collection<? extends CONTENT_TYPE> c) {
-		return false;
+	public void add(int index, CONTENT_TYPE element) {
+		throw new UnsupportedMethodException("add at index is not supported for sorted array list");
 	}
 
 	@Override
-	public boolean addAll(int index, Collection<? extends CONTENT_TYPE> c) {
+	public boolean addAll(int index, Collection<? extends CONTENT_TYPE> elements) {
 		throw new UnsupportedMethodException("addAll at index is not supported for sorted array list");
 	}
 
 	@Override
 	public CONTENT_TYPE set(int index, CONTENT_TYPE element) {
 		throw new UnsupportedMethodException("set value at index is not supported for sorted array list");
-	}
-
-	@Override
-	public void add(int index, CONTENT_TYPE element) {
-		throw new UnsupportedMethodException("add at index is not supported for sorted array list");
 	}
 }
