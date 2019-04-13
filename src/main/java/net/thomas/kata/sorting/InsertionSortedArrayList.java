@@ -3,8 +3,6 @@ package net.thomas.kata.sorting;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import net.thomas.kata.exceptions.UnsupportedMethodException;
-
 public class InsertionSortedArrayList<CONTENT_TYPE extends Comparable<CONTENT_TYPE>> extends ArrayList<CONTENT_TYPE> {
 	private static final long serialVersionUID = 1L;
 
@@ -30,16 +28,16 @@ public class InsertionSortedArrayList<CONTENT_TYPE extends Comparable<CONTENT_TY
 
 	@Override
 	public void add(int index, CONTENT_TYPE element) {
-		throw new UnsupportedMethodException("add at index is not supported for sorted array list");
+		throw new UnsupportedOperationException("add at index is not supported for sorted array list");
 	}
 
 	@Override
 	public boolean addAll(int index, Collection<? extends CONTENT_TYPE> elements) {
-		throw new UnsupportedMethodException("addAll at index is not supported for sorted array list");
+		throw new UnsupportedOperationException("addAll at index is not supported for sorted array list");
 	}
 
 	@Override
 	public CONTENT_TYPE set(int index, CONTENT_TYPE element) {
-		throw new UnsupportedMethodException("set value at index is not supported for sorted array list");
+		throw new UnsupportedOperationException("set element at index is not supported for sorted array list");
 	}
 }

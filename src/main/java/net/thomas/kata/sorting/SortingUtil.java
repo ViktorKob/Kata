@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import net.thomas.kata.exceptions.UnsupportedMethodException;
-
 public class SortingUtil {
 	enum SortingMethod {
 		INSERTION_SORT,
@@ -19,7 +17,7 @@ public class SortingUtil {
 			case MERGE_SORT:
 			return mergeSort(new ArrayList<>(elements), 0, elements.size());
 			default:
-			throw new UnsupportedMethodException("Method " + method.name() + " has not been implemented yet");
+			throw new UnsupportedOperationException("Sorting method " + method.name() + " has not been implemented yet");
 		}
 	}
 

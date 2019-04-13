@@ -11,8 +11,6 @@ import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 
-import net.thomas.kata.exceptions.UnsupportedMethodException;
-
 public class InsertionSortedArrayListUnitTest {
 	private static final Set<Integer> SOME_COLLECTION = emptySet();
 	private static final Integer SOME_OBJECT = 0;
@@ -56,17 +54,17 @@ public class InsertionSortedArrayListUnitTest {
 		assertEquals(SOME_LARGER_OBJECT, elements.next());
 	}
 
-	@Test(expected = UnsupportedMethodException.class)
+	@Test(expected = UnsupportedOperationException.class)
 	public void shouldRejectAddAtIndex() {
 		listUnderTest.add(0, SOME_OBJECT);
 	}
 
-	@Test(expected = UnsupportedMethodException.class)
+	@Test(expected = UnsupportedOperationException.class)
 	public void shouldRejectAddAllAtIndex() {
 		listUnderTest.addAll(0, SOME_COLLECTION);
 	}
 
-	@Test(expected = UnsupportedMethodException.class)
+	@Test(expected = UnsupportedOperationException.class)
 	public void shouldRejectSet() {
 		listUnderTest.set(0, SOME_OBJECT);
 	}
