@@ -1,8 +1,9 @@
 package net.thomas.kata.geometry.objects;
 
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.PriorityQueue;
+import java.util.List;
 
 public class PolygonVertex extends Point2D.Double implements Iterable<PolygonVertex> {
 	private static final long serialVersionUID = 1L;
@@ -31,36 +32,34 @@ public class PolygonVertex extends Point2D.Double implements Iterable<PolygonVer
 		return after;
 	}
 
-	public PriorityQueue<PolygonVertex> buildSweepline() {
-		final PriorityQueue<PolygonVertex> queue = createSweeplineQueue();
+	public List<PolygonVertex> buildSweepline() {
+		final List<PolygonVertex> sweepline = extractVertices();
+		sortVertices(sweepline);
+		return sweepline;
+	}
+
+	private List<PolygonVertex> extractVertices() {
+		final List<PolygonVertex> sweepline = new ArrayList<>();
 		PolygonVertex current = this;
 		do {
-			queue.add(current);
+			sweepline.add(current);
 			current = current.getAfter();
 		} while (current != this);
-		return queue;
+		return sweepline;
 	}
 
-	private PriorityQueue<PolygonVertex> createSweeplineQueue() {
-		final PriorityQueue<PolygonVertex> queue = new PriorityQueue<>((left, right) -> {
-			System.out.println();
-			System.out.println(left.x + ", " + left.y);
-			System.out.println(right.x + ", " + right.y);
-			if (left.y == right.y) {
-				final int i = left.x < right.x ? -1 : 1;
-				System.out.println("x: " + i);
-				return i;
+	private void sortVertices(final List<PolygonVertex> sweepline) {
+		sweepline.sort((left, right) -> {
+			final int difference = java.lang.Double.compare(left.y, right.y);
+			if (difference == 0) {
+				return java.lang.Double.compare(left.x, right.x);
 			} else {
-				final int i = left.y > right.y ? -1 : 1;
-				System.out.println("y: " + i);
-				return i;
+				return -difference;
 			}
 		});
-		return queue;
 	}
 
-	@Override
-	public String toString() {
+	public String allToString() {
 		final StringBuilder polygon = new StringBuilder("Polygon: ");
 		PolygonVertex current = this;
 		do {

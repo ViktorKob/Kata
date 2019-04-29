@@ -4,8 +4,8 @@ import static java.util.Collections.emptySet;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -36,7 +36,7 @@ public class PolygonUtilImpl implements PolygonUtil {
 		}
 
 		private final Set<PolygonVertex> helperVertices;
-		private final Queue<PolygonVertex> sweepline;
+		private final List<PolygonVertex> sweepline;
 		private final Map<PolygonVertex, VertexType> vertexTypes;
 
 		public MonotonePolygonExtractor(PolygonVertex polygon) {
