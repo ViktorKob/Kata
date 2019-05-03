@@ -19,14 +19,14 @@ public class StatusSearchTreeUnitTest {
 
 	@Test
 	public void shouldNotHaveAnyEdgesWhenEmpty() {
-		final Edge result = searchTree.searchLeft(new PolygonVertex(0, 0));
+		final Edge result = searchTree.locateNearestEdgeToTheLeft(new PolygonVertex(0, 0));
 		assertNull(result);
 	}
 
 	@Test
 	public void shouldNotReturnEdgeRightOfVertex() {
 		searchTree.insert(new Edge(new PolygonVertex(0, 0), new PolygonVertex(1, 1)));
-		final Edge result = searchTree.searchLeft(new PolygonVertex(0, 1));
+		final Edge result = searchTree.locateNearestEdgeToTheLeft(new PolygonVertex(0, 1));
 		assertNull(result);
 	}
 
@@ -34,7 +34,7 @@ public class StatusSearchTreeUnitTest {
 	public void shouldReturnEdgeLeftOfVertex() {
 		final Edge expectedEdge = new Edge(new PolygonVertex(0, 0), new PolygonVertex(1, 1));
 		searchTree.insert(expectedEdge);
-		final Edge result = searchTree.searchLeft(new PolygonVertex(1, 0));
+		final Edge result = searchTree.locateNearestEdgeToTheLeft(new PolygonVertex(1, 0));
 		assertSame(expectedEdge, result);
 	}
 
@@ -43,7 +43,7 @@ public class StatusSearchTreeUnitTest {
 		final Edge expectedEdge = new Edge(new PolygonVertex(0, 0), new PolygonVertex(1, 1));
 		searchTree.insert(new Edge(new PolygonVertex(2, 0), new PolygonVertex(3, 1)));
 		searchTree.insert(expectedEdge);
-		final Edge result = searchTree.searchLeft(new PolygonVertex(1, 0));
+		final Edge result = searchTree.locateNearestEdgeToTheLeft(new PolygonVertex(1, 0));
 		assertSame(expectedEdge, result);
 	}
 
@@ -52,7 +52,7 @@ public class StatusSearchTreeUnitTest {
 		final Edge expectedEdge = new Edge(new PolygonVertex(2, 0), new PolygonVertex(3, 1));
 		searchTree.insert(new Edge(new PolygonVertex(0, 0), new PolygonVertex(1, 1)));
 		searchTree.insert(expectedEdge);
-		final Edge result = searchTree.searchLeft(new PolygonVertex(3, 0));
+		final Edge result = searchTree.locateNearestEdgeToTheLeft(new PolygonVertex(3, 0));
 		assertSame(expectedEdge, result);
 	}
 }

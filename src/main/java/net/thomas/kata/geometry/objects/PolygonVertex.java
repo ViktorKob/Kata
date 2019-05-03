@@ -20,6 +20,10 @@ public class PolygonVertex extends Point2D.Double implements Iterable<PolygonVer
 		after = this;
 	}
 
+	public PolygonVertex(PolygonVertex vertex) {
+		this(vertex.x, vertex.y);
+	}
+
 	public void insertAfter(PolygonVertex vertex) {
 		after.before = vertex;
 		vertex.after = after;
@@ -36,19 +40,35 @@ public class PolygonVertex extends Point2D.Double implements Iterable<PolygonVer
 	}
 
 	public List<PolygonVertex> buildSweepline() {
-		final List<PolygonVertex> sweepline = extractVertices();
+		final List<PolygonVertex> sweepline = copyVertices();
 		sortVertices(sweepline);
 		return sweepline;
 	}
 
-	private List<PolygonVertex> extractVertices() {
+	private List<PolygonVertex> copyVertices() {
 		final List<PolygonVertex> sweepline = new ArrayList<>();
-		PolygonVertex current = this;
+		final PolygonVertex root = createClone();
+		PolygonVertex current = root;
 		do {
 			sweepline.add(current);
 			current = current.getAfter();
-		} while (current != this);
+		} while (current != root);
 		return sweepline;
+	}
+
+	private PolygonVertex createClone() {
+		PolygonVertex currentOriginal = this, currentCopy = null;
+		PolygonVertex root = null;
+		do {
+			if (currentCopy == null) {
+				currentCopy = root = new PolygonVertex(currentOriginal);
+			} else {
+				currentCopy.insertAfter(new PolygonVertex(currentOriginal));
+				currentCopy = currentCopy.getAfter();
+			}
+			currentOriginal = currentOriginal.getAfter();
+		} while (currentOriginal != this);
+		return root;
 	}
 
 	private void sortVertices(final List<PolygonVertex> sweepline) {

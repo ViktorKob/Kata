@@ -1,6 +1,11 @@
 package net.thomas.kata.geometry.algorithms;
 
 import static java.lang.Math.abs;
+import static net.thomas.kata.geometry.algorithms.VertexType.END;
+import static net.thomas.kata.geometry.algorithms.VertexType.MERGE;
+import static net.thomas.kata.geometry.algorithms.VertexType.REGULAR;
+import static net.thomas.kata.geometry.algorithms.VertexType.SPLIT;
+import static net.thomas.kata.geometry.algorithms.VertexType.START;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -23,24 +28,14 @@ public class PolygonUtilImpl implements PolygonUtil {
 	 * Chapter 3 - Polygon Triangulation
 	 */
 	static class MonotonePolygonExtractor {
-		private enum VertexType {
-			START,
-			END,
-			REGULAR,
-			SPLIT,
-			MERGE
-		}
-
 		private final Map<PolygonVertex, VertexType> vertexTypes;
 		private final List<PolygonVertex> sweepline;
-		private final Map<PolygonVertex, Edge> edges;
 		private final StatusSearchTree status;
 		private final Collection<PolygonVertex> monotonePolygons;
 
 		public MonotonePolygonExtractor(PolygonVertex polygon) {
 			vertexTypes = determineVertexTypes(polygon);
 			sweepline = polygon.buildSweepline();
-			edges = new HashMap<>();
 			status = new StatusSearchTree();
 			monotonePolygons = new HashSet<>();
 		}
@@ -56,19 +51,19 @@ public class PolygonUtilImpl implements PolygonUtil {
 		private VertexType getVertexType(PolygonVertex vertex) {
 			if (vertex.y > vertex.getBefore().y && vertex.y > vertex.getAfter().y) {
 				if (vertex.getBefore().x < vertex.getAfter().getX()) {
-					return VertexType.START;
+					return START;
 				} else {
-					return VertexType.SPLIT;
+					return SPLIT;
 				}
 			}
 			if (vertex.y < vertex.getBefore().y && vertex.y < vertex.getAfter().y) {
 				if (vertex.getBefore().x < vertex.getAfter().getX()) {
-					return VertexType.MERGE;
+					return MERGE;
 				} else {
-					return VertexType.END;
+					return END;
 				}
 			}
-			return VertexType.REGULAR;
+			return REGULAR;
 		}
 
 		public Collection<PolygonVertex> getMonotonePolygons() {
@@ -98,29 +93,66 @@ public class PolygonUtilImpl implements PolygonUtil {
 		}
 
 		private void handleStartVertex(PolygonVertex vertex) {
-			// status.add(vertex);
+			final Edge edge = new Edge(vertex.getBefore(), vertex);
+			edge.setHelper(vertex);
+			status.insert(edge);
 		}
 
 		private void handleMergeVertex(PolygonVertex vertex) {
+
 		}
 
 		private void handleRegularVertex(PolygonVertex vertex) {
+
 		}
 
 		private void handleSplitVertex(PolygonVertex vertex) {
+			final Edge edge = status.locateNearestEdgeToTheLeft(vertex);
+			monotonePolygons.add(buildMonotoneSequence(edge));
+
+			status.insert(new Edge(vertex.getBefore(), vertex));
+
+			// Update helper for lines
+			// line.helper = &newThis;
+			// v.segment->helper = &v;
+
 		}
 
 		private void handleEndVertex(PolygonVertex vertex) {
-			// helperVertices.add(vertex);
+			final Edge edge = status.extractEdgeWithEndVertex(vertex);
+			monotonePolygons.add(buildMonotoneSequence(edge));
+		}
+
+		private PolygonVertex buildMonotoneSequence(Edge edge) {
+			System.out.println("***************");
+			System.out.println(edge.getStartVertex());
+			System.out.println(edge.getHelper());
+			System.out.println(edge.getEndVertex());
+			System.out.println("(/\\) " + edge.getTopVertex());
+			System.out.println("(\\/) " + edge.getBottomVertex());
+			System.out.println("***************");
+			return edge.getEndVertex();
 		}
 	}
-
 }
 
-// /***
-// * TODO: This should be a balanced search tree (e.g. red / black tree), if O(n*log(n)) is to be
-// * guaranteed
-// ***/
+enum VertexType {
+	START,
+	END,
+	REGULAR,
+	SPLIT,
+	MERGE
+}
+
+enum Direction {
+	CLOCKWISE,
+	COUNTERCLOCKWISE
+}
+
+/***
+ * TODO: This should be a balanced search tree (e.g. red / black tree), if O(n*log(n)) is to be
+ * guaranteed
+ ***/
 class StatusSearchTree {
 	class Node {
 		public Node left;
@@ -165,32 +197,28 @@ class StatusSearchTree {
 		}
 	}
 
-	// Remove the line left of the vertex
-	public void remove(Edge edge) {
-		// Root:
-		if (root.contents == edge) {
+	public Edge extractEdgeWithEndVertex(PolygonVertex vertex) {
+		if (root.contents.getStartVertex() == vertex) {
+			final Edge edge = root.contents;
 			root = removeElement(root);
-			return;
+			return edge;
 		}
-
-		// For each node:
-		// Determine placement of bottom vertex with regard to line segment
-		// (we only remove a line segment when it is no longer relevant).
-		// if child is the node that should be removed, remove it
-		// o.w. switch to child and iterate
 
 		Node current = root;
 		boolean searching = true;
+		Edge edge = null;
 		while (searching) {
-			if (current.contents.isLeftOf(edge.getBottomVertex())) {
-				if (current.right.contents == edge) {
+			if (current.contents.isLeftOf(vertex)) {
+				if (current.right.contents.getStartVertex() == vertex) {
+					edge = current.right.contents;
 					current.right = removeElement(current.right);
 					searching = false;
 				} else {
 					current = current.right;
 				}
 			} else {
-				if (current.left.contents == edge) {
+				if (current.left.contents.getStartVertex() == vertex) {
+					edge = current.left.contents;
 					current.left = removeElement(current.left);
 					searching = false;
 				} else {
@@ -198,10 +226,10 @@ class StatusSearchTree {
 				}
 			}
 		}
+		return edge;
 	}
 
-	// Find the line closest to the vertex towards negative X
-	public Edge searchLeft(final PolygonVertex vertex) {
+	public Edge locateNearestEdgeToTheLeft(final PolygonVertex vertex) {
 		Node current = root;
 		Node closest = null;
 		while (true) {
@@ -357,5 +385,10 @@ class Edge {
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	public String toString() {
+		return start + " -> " + end;
 	}
 }

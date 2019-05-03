@@ -31,6 +31,13 @@ public class PolygonVertexUnitTest {
 	}
 
 	@Test
+	public void shouldBeIdenticalWhenCopied() {
+		final PolygonVertex vertex = new PolygonVertex(1, 1);
+		final PolygonVertex copy = new PolygonVertex(vertex);
+		assertEquals(vertex, copy);
+	}
+
+	@Test
 	public void shouldHaveOtherVertexAsBefore() {
 		final PolygonVertex vertex1 = new PolygonVertex(1, 1);
 		final PolygonVertex vertex2 = new PolygonVertex(2, 2);
@@ -91,14 +98,14 @@ public class PolygonVertexUnitTest {
 		vertex5.insertAfter(vertex8);
 		vertex8.insertAfter(vertex6);
 		final Iterator<PolygonVertex> sweepline = vertex7.buildSweepline().iterator();
-		assertSame(vertex1, sweepline.next());
-		assertSame(vertex2, sweepline.next());
-		assertSame(vertex3, sweepline.next());
-		assertSame(vertex4, sweepline.next());
-		assertSame(vertex5, sweepline.next());
-		assertSame(vertex6, sweepline.next());
-		assertSame(vertex7, sweepline.next());
-		assertSame(vertex8, sweepline.next());
+		assertEquals(vertex1, sweepline.next());
+		assertEquals(vertex2, sweepline.next());
+		assertEquals(vertex3, sweepline.next());
+		assertEquals(vertex4, sweepline.next());
+		assertEquals(vertex5, sweepline.next());
+		assertEquals(vertex6, sweepline.next());
+		assertEquals(vertex7, sweepline.next());
+		assertEquals(vertex8, sweepline.next());
 		assertFalse(sweepline.hasNext());
 	}
 }
