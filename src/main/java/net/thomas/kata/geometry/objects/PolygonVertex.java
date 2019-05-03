@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+/***
+ * Clockwise representation of a polygon
+ */
 public class PolygonVertex extends Point2D.Double implements Iterable<PolygonVertex> {
 	private static final long serialVersionUID = 1L;
 
