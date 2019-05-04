@@ -14,8 +14,8 @@ public class PolygonRenderer extends JFrame {
 	private static final long serialVersionUID = 1L;
 
 	public static void main(String[] args) {
-		final PolygonVertex polygon = buildPolygon(asList(new PolygonVertex(-10, -10), new PolygonVertex(-9, 0), new PolygonVertex(-10, 10),
-				new PolygonVertex(0, 1), new PolygonVertex(10, 10), new PolygonVertex(9, 0), new PolygonVertex(10, -10), new PolygonVertex(0, -1)));
+		final PolygonVertex polygon = buildPolygon(asList(new PolygonVertex(0, -1), new PolygonVertex(10, -10), new PolygonVertex(9, 0),
+				new PolygonVertex(10, 10), new PolygonVertex(0, 1), new PolygonVertex(-10, 10), new PolygonVertex(-9, 0), new PolygonVertex(-10, -10)));
 		final PolygonUtil util = new PolygonUtilImpl();
 		final Collection<PolygonVertex> polygonParts = util.getMonotoneParts(polygon);
 		final PolygonRenderer renderer = new PolygonRenderer(polygonParts);
