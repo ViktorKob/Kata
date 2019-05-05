@@ -23,6 +23,8 @@ public class PolygonVertex extends Point2D.Double implements Iterable<PolygonVer
 
 	public PolygonVertex(PolygonVertex vertex) {
 		this(vertex.x, vertex.y);
+		before = this;
+		after = this;
 		twin = vertex;
 		vertex.twin = this;
 	}
