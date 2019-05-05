@@ -151,7 +151,7 @@ public class PolygonUtilImpl implements PolygonUtil {
 			} else {
 				final Edge edgeToTheLeft = status.locateNearestEdgeToTheLeft(vertex);
 				if (vertexTypes.get(edgeToTheLeft.getHelper()) == MERGE) {
-					// Cut out monotone piece and continue
+					monotonePolygons.add(cutOutMonotonePiece(vertex, edgeToTheLeft.getHelper()));
 				}
 				edgeToTheLeft.setHelper(vertex);
 			}
@@ -159,7 +159,7 @@ public class PolygonUtilImpl implements PolygonUtil {
 
 		private void handleSplitVertex(PolygonVertex vertex) {
 			final Edge edgeToTheLeft = status.locateNearestEdgeToTheLeft(vertex);
-			// Cut out monotone piece and continue
+			monotonePolygons.add(cutOutMonotonePiece(edgeToTheLeft.getHelper(), vertex));
 			edgeToTheLeft.setHelper(vertex);
 			status.insert(edges.get(vertex));
 		}
@@ -167,8 +167,7 @@ public class PolygonUtilImpl implements PolygonUtil {
 		private void handleEndVertex(PolygonVertex vertex) {
 			final Edge edge = edges.get(vertex.getBefore());
 			if (vertexTypes.get(edge.getHelper()) == MERGE) {
-				final PolygonVertex monotonePolygon = cutOutMonotonePiece(edge.getHelper(), vertex);
-				monotonePolygons.add(monotonePolygon);
+				monotonePolygons.add(cutOutMonotonePiece(vertex, edge.getHelper()));
 			}
 			status.deleteEdge(edge);
 			monotonePolygons.add(vertex);

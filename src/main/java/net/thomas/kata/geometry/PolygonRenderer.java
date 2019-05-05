@@ -38,7 +38,7 @@ public class PolygonRenderer extends JFrame {
 		setSize(1024, 768);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		for (final PolygonVertex monotonePolygon : polygonParts) {
-			System.out.println(monotonePolygon);
+			System.out.println(monotonePolygon.allToString());
 		}
 		System.exit(0);
 	}
