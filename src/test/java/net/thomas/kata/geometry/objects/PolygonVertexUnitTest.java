@@ -90,13 +90,7 @@ public class PolygonVertexUnitTest {
 		final PolygonVertex vertex6 = new PolygonVertex(0, -1);
 		final PolygonVertex vertex7 = new PolygonVertex(-10, -10);
 		final PolygonVertex vertex8 = new PolygonVertex(10, -10);
-		vertex4.insertAfter(vertex7);
-		vertex7.insertAfter(vertex6);
-		vertex6.insertAfter(vertex8);
-		vertex8.insertAfter(vertex5);
-		vertex5.insertAfter(vertex2);
-		vertex2.insertAfter(vertex3);
-		vertex3.insertAfter(vertex1);
+		vertex4.insertAfter(vertex7, vertex6, vertex8, vertex5, vertex2, vertex3, vertex1);
 		final Iterator<PolygonVertex> sweepline = vertex7.buildSweepline().iterator();
 		assertEquals(vertex1, sweepline.next());
 		assertEquals(vertex2, sweepline.next());
@@ -115,9 +109,7 @@ public class PolygonVertexUnitTest {
 		final PolygonVertex vertex2 = new PolygonVertex(1, 0);
 		final PolygonVertex vertex3 = new PolygonVertex(1, 1);
 		final PolygonVertex vertex4 = new PolygonVertex(0, 1);
-		vertex1.insertAfter(vertex2);
-		vertex2.insertAfter(vertex3);
-		vertex3.insertAfter(vertex4);
+		vertex1.insertAfter(vertex2, vertex3, vertex4);
 		vertex1.cutIntoTwoPolygons(vertex3);
 		final Iterator<PolygonVertex> newPolygon = vertex1.iterator();
 		assertEquals(vertex1, newPolygon.next());
@@ -132,9 +124,7 @@ public class PolygonVertexUnitTest {
 		final PolygonVertex vertex2 = new PolygonVertex(1, 0);
 		final PolygonVertex vertex3 = new PolygonVertex(1, 1);
 		final PolygonVertex vertex4 = new PolygonVertex(0, 1);
-		vertex1.insertAfter(vertex2);
-		vertex2.insertAfter(vertex3);
-		vertex3.insertAfter(vertex4);
+		vertex1.insertAfter(vertex2, vertex3, vertex4);
 		final Iterator<PolygonVertex> newPolygon = vertex1.cutIntoTwoPolygons(vertex3).iterator();
 		assertEquals(vertex1, newPolygon.next());
 		assertEquals(vertex2, newPolygon.next());
@@ -148,9 +138,7 @@ public class PolygonVertexUnitTest {
 		final PolygonVertex vertex2 = new PolygonVertex(1, 0);
 		final PolygonVertex vertex3 = new PolygonVertex(1, 1);
 		final PolygonVertex vertex4 = new PolygonVertex(0, 1);
-		vertex1.insertAfter(vertex2);
-		vertex2.insertAfter(vertex3);
-		vertex3.insertAfter(vertex4);
+		vertex1.insertAfter(vertex2, vertex3, vertex4);
 		final PolygonVertex clonedVertex = vertex1.cutIntoTwoPolygons(vertex3);
 		assertSame(vertex1, clonedVertex.getTwin());
 	}
@@ -161,9 +149,7 @@ public class PolygonVertexUnitTest {
 		final PolygonVertex vertex2 = new PolygonVertex(1, 0);
 		final PolygonVertex vertex3 = new PolygonVertex(1, 1);
 		final PolygonVertex vertex4 = new PolygonVertex(0, 1);
-		vertex1.insertAfter(vertex2);
-		vertex2.insertAfter(vertex3);
-		vertex3.insertAfter(vertex4);
+		vertex1.insertAfter(vertex2, vertex3, vertex4);
 		final PolygonVertex clonedVertex = vertex1.cutIntoTwoPolygons(vertex3);
 		assertSame(vertex3, clonedVertex.getBefore().getTwin());
 	}

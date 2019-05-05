@@ -27,11 +27,15 @@ public class PolygonVertex extends Point2D.Double implements Iterable<PolygonVer
 		vertex.twin = this;
 	}
 
-	public void insertAfter(PolygonVertex vertex) {
-		after.before = vertex;
-		vertex.after = after;
-		vertex.before = this;
-		after = vertex;
+	public void insertAfter(PolygonVertex... vertices) {
+		PolygonVertex current = this;
+		for (final PolygonVertex vertex : vertices) {
+			current.after.before = vertex;
+			vertex.after = current.after;
+			vertex.before = current;
+			current.after = vertex;
+			current = vertex;
+		}
 	}
 
 	public void replaceBefore(PolygonVertex vertex) {
