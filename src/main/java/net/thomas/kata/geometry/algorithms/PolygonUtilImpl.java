@@ -142,7 +142,7 @@ public class PolygonUtilImpl implements PolygonUtil {
 			if (interiorIsToTheRight(vertex)) {
 				final Edge edgeBeforeVertex = edges.get(vertex.getBefore());
 				if (vertexTypes.get(edgeBeforeVertex.getHelper()) == MERGE) {
-					// Cut out monotone piece and continue
+					monotonePolygons.add(cutOutMonotonePiece(edgeBeforeVertex.getHelper(), vertex));
 				}
 				status.deleteEdge(edgeBeforeVertex);
 				final Edge edgeAfterVertex = edges.get(vertex);
@@ -167,7 +167,7 @@ public class PolygonUtilImpl implements PolygonUtil {
 		private void handleEndVertex(PolygonVertex vertex) {
 			final Edge edge = edges.get(vertex.getBefore());
 			if (vertexTypes.get(edge.getHelper()) == MERGE) {
-				final PolygonVertex monotonePolygon = cutIntoMonotoneAndRemainder(edge.getHelper(), vertex);
+				final PolygonVertex monotonePolygon = cutOutMonotonePiece(edge.getHelper(), vertex);
 				monotonePolygons.add(monotonePolygon);
 			}
 			status.deleteEdge(edge);
@@ -178,8 +178,8 @@ public class PolygonUtilImpl implements PolygonUtil {
 			return vertex.getAfter().y < vertex.getBefore().y;
 		}
 
-		private PolygonVertex cutIntoMonotoneAndRemainder(PolygonVertex helper, PolygonVertex vertex) {
-			return null;
+		private PolygonVertex cutOutMonotonePiece(PolygonVertex before, PolygonVertex after) {
+			return before.cutIntoTwoPolygons(after);
 		}
 	}
 }
@@ -324,10 +324,12 @@ class Edge {
 	private final PolygonVertex start;
 	private final PolygonVertex end;
 	private PolygonVertex helper;
+	private Edge twin;
 
 	public Edge(PolygonVertex start, PolygonVertex end) {
 		this.start = start;
 		this.end = end;
+		twin = null;
 	}
 
 	public PolygonVertex getStartVertex() {
@@ -336,6 +338,14 @@ class Edge {
 
 	public PolygonVertex getEndVertex() {
 		return end;
+	}
+
+	public void setTwin(Edge twin) {
+		this.twin = twin;
+	}
+
+	public Edge getTwin() {
+		return twin;
 	}
 
 	public PolygonVertex getTopVertex() {

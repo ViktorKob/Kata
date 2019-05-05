@@ -108,4 +108,63 @@ public class PolygonVertexUnitTest {
 		assertEquals(vertex8, sweepline.next());
 		assertFalse(sweepline.hasNext());
 	}
+
+	@Test
+	public void shouldCutNewPolygonOutOfOriginal() {
+		final PolygonVertex vertex1 = new PolygonVertex(0, 0);
+		final PolygonVertex vertex2 = new PolygonVertex(1, 0);
+		final PolygonVertex vertex3 = new PolygonVertex(1, 1);
+		final PolygonVertex vertex4 = new PolygonVertex(0, 1);
+		vertex1.insertAfter(vertex2);
+		vertex2.insertAfter(vertex3);
+		vertex3.insertAfter(vertex4);
+		vertex1.cutIntoTwoPolygons(vertex3);
+		final Iterator<PolygonVertex> newPolygon = vertex1.iterator();
+		assertEquals(vertex1, newPolygon.next());
+		assertEquals(vertex3, newPolygon.next());
+		assertEquals(vertex4, newPolygon.next());
+		assertFalse(newPolygon.hasNext());
+	}
+
+	@Test
+	public void shouldBuildNewPolygonIntoFromOriginal() {
+		final PolygonVertex vertex1 = new PolygonVertex(0, 0);
+		final PolygonVertex vertex2 = new PolygonVertex(1, 0);
+		final PolygonVertex vertex3 = new PolygonVertex(1, 1);
+		final PolygonVertex vertex4 = new PolygonVertex(0, 1);
+		vertex1.insertAfter(vertex2);
+		vertex2.insertAfter(vertex3);
+		vertex3.insertAfter(vertex4);
+		final Iterator<PolygonVertex> newPolygon = vertex1.cutIntoTwoPolygons(vertex3).iterator();
+		assertEquals(vertex1, newPolygon.next());
+		assertEquals(vertex2, newPolygon.next());
+		assertEquals(vertex3, newPolygon.next());
+		assertFalse(newPolygon.hasNext());
+	}
+
+	@Test
+	public void shouldRememberOriginalSourceVertex() {
+		final PolygonVertex vertex1 = new PolygonVertex(0, 0);
+		final PolygonVertex vertex2 = new PolygonVertex(1, 0);
+		final PolygonVertex vertex3 = new PolygonVertex(1, 1);
+		final PolygonVertex vertex4 = new PolygonVertex(0, 1);
+		vertex1.insertAfter(vertex2);
+		vertex2.insertAfter(vertex3);
+		vertex3.insertAfter(vertex4);
+		final PolygonVertex clonedVertex = vertex1.cutIntoTwoPolygons(vertex3);
+		assertSame(vertex1, clonedVertex.getTwin());
+	}
+
+	@Test
+	public void shouldRememberOriginalTargetVertex() {
+		final PolygonVertex vertex1 = new PolygonVertex(0, 0);
+		final PolygonVertex vertex2 = new PolygonVertex(1, 0);
+		final PolygonVertex vertex3 = new PolygonVertex(1, 1);
+		final PolygonVertex vertex4 = new PolygonVertex(0, 1);
+		vertex1.insertAfter(vertex2);
+		vertex2.insertAfter(vertex3);
+		vertex3.insertAfter(vertex4);
+		final PolygonVertex clonedVertex = vertex1.cutIntoTwoPolygons(vertex3);
+		assertSame(vertex3, clonedVertex.getBefore().getTwin());
+	}
 }

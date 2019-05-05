@@ -6,13 +6,14 @@ import java.util.Iterator;
 import java.util.List;
 
 /***
- * Clockwise representation of a polygon
+ * Counterclockwise representation of a polygon
  */
 public class PolygonVertex extends Point2D.Double implements Iterable<PolygonVertex> {
 	private static final long serialVersionUID = 1L;
 
 	private PolygonVertex before;
 	private PolygonVertex after;
+	private PolygonVertex twin;
 
 	public PolygonVertex(double x, double y) {
 		super(x, y);
@@ -22,6 +23,8 @@ public class PolygonVertex extends Point2D.Double implements Iterable<PolygonVer
 
 	public PolygonVertex(PolygonVertex vertex) {
 		this(vertex.x, vertex.y);
+		twin = vertex;
+		vertex.twin = this;
 	}
 
 	public void insertAfter(PolygonVertex vertex) {
@@ -31,12 +34,26 @@ public class PolygonVertex extends Point2D.Double implements Iterable<PolygonVer
 		after = vertex;
 	}
 
+	public void replaceBefore(PolygonVertex vertex) {
+		before = vertex;
+		vertex.after = this;
+	}
+
+	public void replaceAfter(PolygonVertex vertex) {
+		after = vertex;
+		vertex.before = this;
+	}
+
 	public PolygonVertex getBefore() {
 		return before;
 	}
 
 	public PolygonVertex getAfter() {
 		return after;
+	}
+
+	public PolygonVertex getTwin() {
+		return twin;
 	}
 
 	public List<PolygonVertex> buildSweepline() {
@@ -77,6 +94,22 @@ public class PolygonVertex extends Point2D.Double implements Iterable<PolygonVer
 				return -difference;
 			}
 		});
+	}
+
+	public PolygonVertex cutIntoTwoPolygons(PolygonVertex targetVertex) {
+		final PolygonVertex nextInNewPolygon = getAfter();
+		final PolygonVertex secondLastInNewPolygon = targetVertex.getBefore();
+		final PolygonVertex thisClone = new PolygonVertex(this);
+		final PolygonVertex targetClone = new PolygonVertex(targetVertex);
+		after = targetVertex;
+		targetVertex.before = this;
+		thisClone.after = nextInNewPolygon;
+		nextInNewPolygon.before = thisClone;
+		targetClone.before = secondLastInNewPolygon;
+		secondLastInNewPolygon.after = targetClone;
+		thisClone.before = targetClone;
+		targetClone.after = thisClone;
+		return thisClone;
 	}
 
 	public String allToString() {

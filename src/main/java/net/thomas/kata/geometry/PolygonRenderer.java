@@ -40,5 +40,6 @@ public class PolygonRenderer extends JFrame {
 		for (final PolygonVertex monotonePolygon : polygonParts) {
 			System.out.println(monotonePolygon);
 		}
+		System.exit(0);
 	}
 }
