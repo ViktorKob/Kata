@@ -12,7 +12,7 @@ import static net.thomas.kata.geometry.algorithms.VertexType.START;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -43,7 +43,7 @@ public class PolygonUtilImpl implements PolygonUtil {
 			vertexTypes = determineVertexTypes(polygon);
 			sweepline = polygon.buildSweepline();
 			status = new StatusSearchTree();
-			monotonePolygons = new HashSet<>();
+			monotonePolygons = new LinkedList<>();
 		}
 
 		private Map<PolygonVertex, Edge> buildEdgeMap(PolygonVertex polygon) {
@@ -64,14 +64,14 @@ public class PolygonUtilImpl implements PolygonUtil {
 
 		private VertexType getVertexType(PolygonVertex vertex) {
 			final double angle = calculateInteriorAngleFor(vertex);
-			if (vertex.y > vertex.getBefore().y && vertex.y > vertex.getAfter().y) {
+			if (vertex.y >= vertex.getBefore().y && vertex.y > vertex.getAfter().y) {
 				if (angle < PI) {
 					return START;
 				} else {
 					return SPLIT;
 				}
 			}
-			if (vertex.y < vertex.getBefore().y && vertex.y < vertex.getAfter().y) {
+			if (vertex.y <= vertex.getBefore().y && vertex.y < vertex.getAfter().y) {
 				if (angle < PI) {
 					return END;
 				} else {
@@ -98,6 +98,7 @@ public class PolygonUtilImpl implements PolygonUtil {
 			monotonePolygons.clear();
 			for (final PolygonVertex vertex : sweepline) {
 				final VertexType vertexType = vertexTypes.get(vertex);
+				System.out.println(vertexType);
 				switch (vertexType) {
 					case START:
 						handleStartVertex(vertex);
@@ -128,12 +129,12 @@ public class PolygonUtilImpl implements PolygonUtil {
 		private void handleMergeVertex(PolygonVertex vertex) {
 			final Edge edgeBeforeVertex = edges.get(vertex.getBefore());
 			if (vertexTypes.get(edgeBeforeVertex.getHelper()) == MERGE) {
-				// Cut out monotone piece and continue
+				monotonePolygons.add(cutOutMonotonePiece(vertex, edgeBeforeVertex.getHelper()));
 			}
 			status.deleteEdge(edgeBeforeVertex);
 			final Edge edgeLeftOfVertex = status.locateNearestEdgeToTheLeft(vertex);
 			if (vertexTypes.get(edgeLeftOfVertex.getHelper()) == MERGE) {
-				// Cut out monotone piece and continue
+				monotonePolygons.add(cutOutMonotonePiece(vertex, edgeLeftOfVertex.getHelper()));
 			}
 			edgeLeftOfVertex.setHelper(vertex);
 		}
