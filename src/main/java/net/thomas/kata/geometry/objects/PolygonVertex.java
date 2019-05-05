@@ -47,27 +47,24 @@ public class PolygonVertex extends Point2D.Double implements Iterable<PolygonVer
 
 	private List<PolygonVertex> copyVertices() {
 		final List<PolygonVertex> sweepline = new ArrayList<>();
-		final PolygonVertex root = createClone();
-		PolygonVertex current = root;
-		do {
-			sweepline.add(current);
-			current = current.getAfter();
-		} while (current != root);
+		final PolygonVertex clone = createClone();
+		for (final PolygonVertex vertex : clone) {
+			sweepline.add(vertex);
+		}
 		return sweepline;
 	}
 
 	private PolygonVertex createClone() {
-		PolygonVertex currentOriginal = this, currentCopy = null;
+		PolygonVertex currentCopy = null;
 		PolygonVertex root = null;
-		do {
+		for (final PolygonVertex vertex : this) {
 			if (currentCopy == null) {
-				currentCopy = root = new PolygonVertex(currentOriginal);
+				currentCopy = root = new PolygonVertex(vertex);
 			} else {
-				currentCopy.insertAfter(new PolygonVertex(currentOriginal));
+				currentCopy.insertAfter(new PolygonVertex(vertex));
 				currentCopy = currentCopy.getAfter();
 			}
-			currentOriginal = currentOriginal.getAfter();
-		} while (currentOriginal != this);
+		}
 		return root;
 	}
 

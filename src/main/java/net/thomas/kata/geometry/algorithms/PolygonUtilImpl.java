@@ -1,6 +1,9 @@
 package net.thomas.kata.geometry.algorithms;
 
+import static java.lang.Math.PI;
 import static java.lang.Math.abs;
+import static java.lang.Math.atan2;
+import static net.thomas.kata.geometry.algorithms.PolygonUtilImpl.EPSILON;
 import static net.thomas.kata.geometry.algorithms.VertexType.END;
 import static net.thomas.kata.geometry.algorithms.VertexType.MERGE;
 import static net.thomas.kata.geometry.algorithms.VertexType.REGULAR;
@@ -17,10 +20,11 @@ import net.thomas.kata.geometry.PolygonUtil;
 import net.thomas.kata.geometry.objects.PolygonVertex;
 
 public class PolygonUtilImpl implements PolygonUtil {
+	public static final double EPSILON = 0.0000001d;
 
 	@Override
 	public Collection<PolygonVertex> getMonotoneParts(PolygonVertex polygon) {
-		return new MonotonePolygonExtractor(polygon).getMonotonePolygons();
+		return new MonotonePolygonExtractor(polygon).calculateMonotonePolygons();
 	}
 
 	/***
@@ -28,16 +32,26 @@ public class PolygonUtilImpl implements PolygonUtil {
 	 * Chapter 3 - Polygon Triangulation
 	 */
 	static class MonotonePolygonExtractor {
+		private final Map<PolygonVertex, Edge> edges;
 		private final Map<PolygonVertex, VertexType> vertexTypes;
 		private final List<PolygonVertex> sweepline;
 		private final StatusSearchTree status;
 		private final Collection<PolygonVertex> monotonePolygons;
 
 		public MonotonePolygonExtractor(PolygonVertex polygon) {
+			edges = buildEdgeMap(polygon);
 			vertexTypes = determineVertexTypes(polygon);
 			sweepline = polygon.buildSweepline();
 			status = new StatusSearchTree();
 			monotonePolygons = new HashSet<>();
+		}
+
+		private Map<PolygonVertex, Edge> buildEdgeMap(PolygonVertex polygon) {
+			final Map<PolygonVertex, Edge> edges = new HashMap<>();
+			for (final PolygonVertex vertex : polygon) {
+				edges.put(vertex, new Edge(vertex, vertex.getAfter()));
+			}
+			return edges;
 		}
 
 		private Map<PolygonVertex, VertexType> determineVertexTypes(PolygonVertex polygon) {
@@ -49,28 +63,41 @@ public class PolygonUtilImpl implements PolygonUtil {
 		}
 
 		private VertexType getVertexType(PolygonVertex vertex) {
+			final double angle = calculateInteriorAngleFor(vertex);
 			if (vertex.y > vertex.getBefore().y && vertex.y > vertex.getAfter().y) {
-				if (vertex.getBefore().x < vertex.getAfter().getX()) {
+				if (angle < PI) {
 					return START;
 				} else {
 					return SPLIT;
 				}
 			}
 			if (vertex.y < vertex.getBefore().y && vertex.y < vertex.getAfter().y) {
-				if (vertex.getBefore().x < vertex.getAfter().getX()) {
-					return MERGE;
-				} else {
+				if (angle < PI) {
 					return END;
+				} else {
+					return MERGE;
 				}
 			}
 			return REGULAR;
 		}
 
-		public Collection<PolygonVertex> getMonotonePolygons() {
+		private double calculateInteriorAngleFor(PolygonVertex vertex) {
+			double angle = atan2(vertex.y - vertex.getAfter().y, vertex.x - vertex.getAfter().x)
+					- atan2(vertex.getBefore().y - vertex.y, vertex.getBefore().x - vertex.x);
+			if (angle < 0) {
+				angle += PI * 2;
+			}
+			if (abs(angle - PI) < EPSILON) {
+				return PI;
+			}
+			return angle;
+
+		}
+
+		public Collection<PolygonVertex> calculateMonotonePolygons() {
 			monotonePolygons.clear();
 			for (final PolygonVertex vertex : sweepline) {
 				final VertexType vertexType = vertexTypes.get(vertex);
-				System.out.println("Vertex [" + vertex.x + ", " + vertex.y + "] is a " + vertexType + " vertex");
 				switch (vertexType) {
 					case START:
 						handleStartVertex(vertex);
@@ -93,45 +120,66 @@ public class PolygonUtilImpl implements PolygonUtil {
 		}
 
 		private void handleStartVertex(PolygonVertex vertex) {
-			final Edge edge = new Edge(vertex.getBefore(), vertex);
+			final Edge edge = edges.get(vertex);
 			edge.setHelper(vertex);
 			status.insert(edge);
 		}
 
 		private void handleMergeVertex(PolygonVertex vertex) {
-
+			final Edge edgeBeforeVertex = edges.get(vertex.getBefore());
+			if (vertexTypes.get(edgeBeforeVertex.getHelper()) == MERGE) {
+				// Cut out monotone piece and continue
+			}
+			status.deleteEdge(edgeBeforeVertex);
+			final Edge edgeLeftOfVertex = status.locateNearestEdgeToTheLeft(vertex);
+			if (vertexTypes.get(edgeLeftOfVertex.getHelper()) == MERGE) {
+				// Cut out monotone piece and continue
+			}
+			edgeLeftOfVertex.setHelper(vertex);
 		}
 
 		private void handleRegularVertex(PolygonVertex vertex) {
-
+			if (interiorIsToTheRight(vertex)) {
+				final Edge edgeBeforeVertex = edges.get(vertex.getBefore());
+				if (vertexTypes.get(edgeBeforeVertex.getHelper()) == MERGE) {
+					// Cut out monotone piece and continue
+				}
+				status.deleteEdge(edgeBeforeVertex);
+				final Edge edgeAfterVertex = edges.get(vertex);
+				edgeAfterVertex.setHelper(vertex);
+				status.insert(edgeAfterVertex);
+			} else {
+				final Edge edgeToTheLeft = status.locateNearestEdgeToTheLeft(vertex);
+				if (vertexTypes.get(edgeToTheLeft.getHelper()) == MERGE) {
+					// Cut out monotone piece and continue
+				}
+				edgeToTheLeft.setHelper(vertex);
+			}
 		}
 
 		private void handleSplitVertex(PolygonVertex vertex) {
-			final Edge edge = status.locateNearestEdgeToTheLeft(vertex);
-			monotonePolygons.add(buildMonotoneSequence(edge));
-
-			status.insert(new Edge(vertex.getBefore(), vertex));
-
-			// Update helper for lines
-			// line.helper = &newThis;
-			// v.segment->helper = &v;
-
+			final Edge edgeToTheLeft = status.locateNearestEdgeToTheLeft(vertex);
+			// Cut out monotone piece and continue
+			edgeToTheLeft.setHelper(vertex);
+			status.insert(edges.get(vertex));
 		}
 
 		private void handleEndVertex(PolygonVertex vertex) {
-			final Edge edge = status.extractEdgeWithEndVertex(vertex);
-			monotonePolygons.add(buildMonotoneSequence(edge));
+			final Edge edge = edges.get(vertex.getBefore());
+			if (vertexTypes.get(edge.getHelper()) == MERGE) {
+				final PolygonVertex monotonePolygon = cutIntoMonotoneAndRemainder(edge.getHelper(), vertex);
+				monotonePolygons.add(monotonePolygon);
+			}
+			status.deleteEdge(edge);
+			monotonePolygons.add(vertex);
 		}
 
-		private PolygonVertex buildMonotoneSequence(Edge edge) {
-			System.out.println("***************");
-			System.out.println(edge.getStartVertex());
-			System.out.println(edge.getHelper());
-			System.out.println(edge.getEndVertex());
-			System.out.println("(/\\) " + edge.getTopVertex());
-			System.out.println("(\\/) " + edge.getBottomVertex());
-			System.out.println("***************");
-			return edge.getEndVertex();
+		private boolean interiorIsToTheRight(PolygonVertex vertex) {
+			return vertex.getAfter().y < vertex.getBefore().y;
+		}
+
+		private PolygonVertex cutIntoMonotoneAndRemainder(PolygonVertex helper, PolygonVertex vertex) {
+			return null;
 		}
 	}
 }
@@ -197,28 +245,24 @@ class StatusSearchTree {
 		}
 	}
 
-	public Edge extractEdgeWithEndVertex(PolygonVertex vertex) {
-		if (root.contents.getStartVertex() == vertex) {
-			final Edge edge = root.contents;
+	public void deleteEdge(Edge edge) {
+		if (root.contents == edge) {
 			root = removeElement(root);
-			return edge;
+			return;
 		}
 
 		Node current = root;
 		boolean searching = true;
-		Edge edge = null;
 		while (searching) {
-			if (current.contents.isLeftOf(vertex)) {
-				if (current.right.contents.getStartVertex() == vertex) {
-					edge = current.right.contents;
+			if (current.contents.isLeftOf(edge.getBottomVertex())) {
+				if (current.right.contents == edge) {
 					current.right = removeElement(current.right);
 					searching = false;
 				} else {
 					current = current.right;
 				}
 			} else {
-				if (current.left.contents.getStartVertex() == vertex) {
-					edge = current.left.contents;
+				if (current.left.contents == edge) {
 					current.left = removeElement(current.left);
 					searching = false;
 				} else {
@@ -226,7 +270,6 @@ class StatusSearchTree {
 				}
 			}
 		}
-		return edge;
 	}
 
 	public Edge locateNearestEdgeToTheLeft(final PolygonVertex vertex) {
@@ -278,7 +321,6 @@ class StatusSearchTree {
 }
 
 class Edge {
-	public double EPSILON = 0.0000001d;
 	private final PolygonVertex start;
 	private final PolygonVertex end;
 	private PolygonVertex helper;
