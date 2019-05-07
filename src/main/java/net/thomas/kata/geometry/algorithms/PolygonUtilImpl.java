@@ -98,7 +98,6 @@ public class PolygonUtilImpl implements PolygonUtil {
 			monotonePolygons.clear();
 			for (final PolygonVertex vertex : sweepline) {
 				final VertexType vertexType = vertexTypes.get(vertex);
-				System.out.println(vertexType);
 				switch (vertexType) {
 					case START:
 						handleStartVertex(vertex);
@@ -160,9 +159,11 @@ public class PolygonUtilImpl implements PolygonUtil {
 
 		private void handleSplitVertex(PolygonVertex vertex) {
 			final Edge edgeToTheLeft = status.locateNearestEdgeToTheLeft(vertex);
-			monotonePolygons.add(cutOutMonotonePiece(edgeToTheLeft.getHelper(), vertex));
+			cutOutMonotonePiece(edgeToTheLeft.getHelper(), vertex);
 			edgeToTheLeft.setHelper(vertex);
-			status.insert(edges.get(vertex));
+			final Edge edgeToAdd = edges.get(vertex);
+			edgeToAdd.setHelper(vertex);
+			status.insert(edgeToAdd);
 		}
 
 		private void handleEndVertex(PolygonVertex vertex) {
@@ -441,6 +442,6 @@ class Edge {
 
 	@Override
 	public String toString() {
-		return start + " -> " + end;
+		return start + " -> " + end + (helper != null ? " (Helper: " + helper + ")" : "");
 	}
 }

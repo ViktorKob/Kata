@@ -34,19 +34,36 @@ public class PolygonUtilImplUnitTest {
 	}
 
 	@Test
-	public void shouldDivideMergeToMerge() {
+	public void shouldHandleMergeCasesCorrectly() {
 		final PolygonVertex vertex1 = new PolygonVertex(0, 0);
 		final PolygonVertex vertex2 = new PolygonVertex(4, 0);
-		final PolygonVertex vertex3 = new PolygonVertex(4, 2);
+		final PolygonVertex vertex3 = new PolygonVertex(4, 3);
 		final PolygonVertex vertex4 = new PolygonVertex(3, 1);
-		final PolygonVertex vertex5 = new PolygonVertex(2, 2);
-		final PolygonVertex vertex6 = new PolygonVertex(1, 1);
-		final PolygonVertex vertex7 = new PolygonVertex(0, 2);
+		final PolygonVertex vertex5 = new PolygonVertex(2, 3);
+		final PolygonVertex vertex6 = new PolygonVertex(1, 2);
+		final PolygonVertex vertex7 = new PolygonVertex(0, 3);
 		final PolygonVertex polygon = builder.add(vertex1, vertex2, vertex3, vertex4, vertex5, vertex6, vertex7).build();
 		final Iterator<PolygonVertex> monotoneParts = util.getMonotoneParts(polygon).iterator();
 		assertEquals(vertex4, monotoneParts.next());
 		assertEquals(vertex4, monotoneParts.next());
 		assertEquals(vertex2, monotoneParts.next());
+		assertFalse(monotoneParts.hasNext());
+	}
+
+	@Test
+	public void shouldHandleSplitCasesCorrectly() {
+		final PolygonVertex vertex1 = new PolygonVertex(0, 0);
+		final PolygonVertex vertex2 = new PolygonVertex(1, 1);
+		final PolygonVertex vertex3 = new PolygonVertex(2, 0);
+		final PolygonVertex vertex4 = new PolygonVertex(3, 1);
+		final PolygonVertex vertex5 = new PolygonVertex(4, 0);
+		final PolygonVertex vertex6 = new PolygonVertex(4, 3);
+		final PolygonVertex vertex7 = new PolygonVertex(0, 3);
+		final PolygonVertex polygon = builder.add(vertex1, vertex2, vertex3, vertex4, vertex5, vertex6, vertex7).build();
+		final Iterator<PolygonVertex> monotoneParts = util.getMonotoneParts(polygon).iterator();
+		assertEquals(vertex1, monotoneParts.next());
+		assertEquals(vertex3, monotoneParts.next());
+		assertEquals(vertex5, monotoneParts.next());
 		assertFalse(monotoneParts.hasNext());
 	}
 }

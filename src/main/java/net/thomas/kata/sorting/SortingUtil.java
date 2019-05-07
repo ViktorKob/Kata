@@ -13,11 +13,11 @@ public class SortingUtil {
 	public static <TYPE extends Comparable<TYPE>> List<TYPE> sort(SortingMethod method, Collection<TYPE> elements) {
 		switch (method) {
 			case INSERTION_SORT:
-			return insertionSort(new ArrayList<>(elements));
+				return insertionSort(new ArrayList<>(elements));
 			case MERGE_SORT:
-			return mergeSort(new ArrayList<>(elements), 0, elements.size());
+				return mergeSort(new ArrayList<>(elements), 0, elements.size());
 			default:
-			throw new UnsupportedOperationException("Sorting method " + method.name() + " has not been implemented yet");
+				throw new UnsupportedOperationException("Sorting method " + method.name() + " has not been implemented yet");
 		}
 	}
 
@@ -25,7 +25,7 @@ public class SortingUtil {
 		final ArrayList<TYPE> sortedElements = new ArrayList<>();
 		elementLoop: for (final TYPE element : elements) {
 			for (int elementIndex = sortedElements.size() - 1; elementIndex >= 0; elementIndex--) {
-				if (element.compareTo(sortedElements.get(elementIndex)) > 0) {
+				if (element.compareTo(sortedElements.get(elementIndex)) < 0) {
 					sortedElements.add(elementIndex, element);
 					continue elementLoop;
 				}
