@@ -10,6 +10,7 @@ import static net.thomas.kata.geometry.algorithms.VertexType.REGULAR;
 import static net.thomas.kata.geometry.algorithms.VertexType.SPLIT;
 import static net.thomas.kata.geometry.algorithms.VertexType.START;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -23,8 +24,8 @@ public class PolygonUtilImpl implements PolygonUtil {
 	public static final double EPSILON = 0.0000001d;
 
 	@Override
-	public Collection<PolygonVertex> getMonotoneParts(PolygonVertex polygon) {
-		return new MonotonePolygonExtractor(polygon).calculateMonotonePolygons();
+	public Collection<PolygonVertex> getMonotoneParts(Collection<PolygonVertex> polygons) {
+		return new MonotonePolygonExtractor(polygons).calculateMonotonePolygons();
 	}
 
 	/***
@@ -38,28 +39,41 @@ public class PolygonUtilImpl implements PolygonUtil {
 		private final StatusSearchTree status;
 		private final Collection<PolygonVertex> monotonePolygons;
 
-		public MonotonePolygonExtractor(PolygonVertex polygon) {
-			edges = buildEdgeMap(polygon);
-			vertexTypes = determineVertexTypes(polygon);
-			sweepline = polygon.buildSweepline();
+		public MonotonePolygonExtractor(Collection<PolygonVertex> polygons) {
+			edges = buildEdgeMap(polygons);
+			vertexTypes = determineVertexTypes(polygons);
+			new SweeplineBuilder();
+			sweepline = buildSweepline(polygons);
 			status = new StatusSearchTree();
 			monotonePolygons = new LinkedList<>();
 		}
 
-		private Map<PolygonVertex, Edge> buildEdgeMap(PolygonVertex polygon) {
+		private Map<PolygonVertex, Edge> buildEdgeMap(Collection<PolygonVertex> polygons) {
 			final Map<PolygonVertex, Edge> edges = new HashMap<>();
-			for (final PolygonVertex vertex : polygon) {
-				edges.put(vertex, new Edge(vertex, vertex.getAfter()));
+			for (final PolygonVertex polygon : polygons) {
+				for (final PolygonVertex vertex : polygon) {
+					edges.put(vertex, new Edge(vertex, vertex.getAfter()));
+				}
 			}
 			return edges;
 		}
 
-		private Map<PolygonVertex, VertexType> determineVertexTypes(PolygonVertex polygon) {
+		private Map<PolygonVertex, VertexType> determineVertexTypes(Collection<PolygonVertex> polygons) {
 			final Map<PolygonVertex, VertexType> vertexTypes = new HashMap<>();
-			for (final PolygonVertex vertex : polygon) {
-				vertexTypes.put(vertex, getVertexType(vertex));
+			for (final PolygonVertex polygon : polygons) {
+				for (final PolygonVertex vertex : polygon) {
+					vertexTypes.put(vertex, getVertexType(vertex));
+				}
 			}
 			return vertexTypes;
+		}
+
+		private List<PolygonVertex> buildSweepline(Collection<PolygonVertex> polygons) {
+			final SweeplineBuilder builder = new SweeplineBuilder();
+			for (final PolygonVertex vertex : polygons) {
+				builder.add(vertex);
+			}
+			return builder.build();
 		}
 
 		private VertexType getVertexType(PolygonVertex vertex) {
@@ -196,6 +210,46 @@ enum VertexType {
 enum Direction {
 	CLOCKWISE,
 	COUNTERCLOCKWISE
+}
+
+class SweeplineBuilder {
+	private final List<PolygonVertex> polygons;
+
+	public SweeplineBuilder() {
+		polygons = new LinkedList<>();
+	}
+
+	public SweeplineBuilder add(PolygonVertex polygon) {
+		polygons.add(polygon);
+		return this;
+	}
+
+	public List<PolygonVertex> build() {
+		final List<PolygonVertex> sweepline = cloneIntoSweeplineList(polygons);
+		sortVertices(sweepline);
+		return sweepline;
+	}
+
+	private List<PolygonVertex> cloneIntoSweeplineList(List<PolygonVertex> polygons2) {
+		final List<PolygonVertex> sweepline = new ArrayList<>();
+		for (final PolygonVertex polygon : polygons) {
+			for (final PolygonVertex vertex : polygon.createClone()) {
+				sweepline.add(vertex);
+			}
+		}
+		return sweepline;
+	}
+
+	private void sortVertices(final List<PolygonVertex> sweepline) {
+		sweepline.sort((left, right) -> {
+			final int difference = java.lang.Double.compare(left.y, right.y);
+			if (difference == 0) {
+				return java.lang.Double.compare(left.x, right.x);
+			} else {
+				return -difference;
+			}
+		});
+	}
 }
 
 /***

@@ -1,5 +1,6 @@
 package net.thomas.kata.geometry.algorithms;
 
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
@@ -28,7 +29,7 @@ public class PolygonUtilImplUnitTest {
 		final PolygonVertex vertex2 = new PolygonVertex(1, 1);
 		final PolygonVertex vertex3 = new PolygonVertex(0, 1);
 		final PolygonVertex polygon = builder.add(vertex1, vertex2, vertex3).build();
-		final Iterator<PolygonVertex> monotoneParts = util.getMonotoneParts(polygon).iterator();
+		final Iterator<PolygonVertex> monotoneParts = util.getMonotoneParts(asList(polygon)).iterator();
 		assertEquals(polygon, monotoneParts.next());
 		assertFalse(monotoneParts.hasNext());
 	}
@@ -43,7 +44,7 @@ public class PolygonUtilImplUnitTest {
 		final PolygonVertex vertex6 = new PolygonVertex(1, 2);
 		final PolygonVertex vertex7 = new PolygonVertex(0, 3);
 		final PolygonVertex polygon = builder.add(vertex1, vertex2, vertex3, vertex4, vertex5, vertex6, vertex7).build();
-		final Iterator<PolygonVertex> monotoneParts = util.getMonotoneParts(polygon).iterator();
+		final Iterator<PolygonVertex> monotoneParts = util.getMonotoneParts(asList(polygon)).iterator();
 		assertEquals(vertex4, monotoneParts.next());
 		assertEquals(vertex4, monotoneParts.next());
 		assertEquals(vertex2, monotoneParts.next());
@@ -60,7 +61,7 @@ public class PolygonUtilImplUnitTest {
 		final PolygonVertex vertex6 = new PolygonVertex(4, 3);
 		final PolygonVertex vertex7 = new PolygonVertex(0, 3);
 		final PolygonVertex polygon = builder.add(vertex1, vertex2, vertex3, vertex4, vertex5, vertex6, vertex7).build();
-		final Iterator<PolygonVertex> monotoneParts = util.getMonotoneParts(polygon).iterator();
+		final Iterator<PolygonVertex> monotoneParts = util.getMonotoneParts(asList(polygon)).iterator();
 		assertEquals(vertex1, monotoneParts.next());
 		assertEquals(vertex3, monotoneParts.next());
 		assertEquals(vertex5, monotoneParts.next());

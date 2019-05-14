@@ -1,12 +1,11 @@
 package net.thomas.kata.geometry.objects;
 
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 /***
- * Counterclockwise representation of a polygon
+ * Counterclockwise representation of a polygon. In clockwise order, it should be treated as a hole
+ * in another polygon instead.
  */
 public class PolygonVertex extends Point2D.Double implements Iterable<PolygonVertex> {
 	private static final long serialVersionUID = 1L;
@@ -62,22 +61,7 @@ public class PolygonVertex extends Point2D.Double implements Iterable<PolygonVer
 		return twin;
 	}
 
-	public List<PolygonVertex> buildSweepline() {
-		final List<PolygonVertex> sweepline = copyVertices();
-		sortVertices(sweepline);
-		return sweepline;
-	}
-
-	private List<PolygonVertex> copyVertices() {
-		final List<PolygonVertex> sweepline = new ArrayList<>();
-		final PolygonVertex clone = createClone();
-		for (final PolygonVertex vertex : clone) {
-			sweepline.add(vertex);
-		}
-		return sweepline;
-	}
-
-	private PolygonVertex createClone() {
+	public PolygonVertex createClone() {
 		PolygonVertex currentCopy = null;
 		PolygonVertex root = null;
 		for (final PolygonVertex vertex : this) {
@@ -89,17 +73,6 @@ public class PolygonVertex extends Point2D.Double implements Iterable<PolygonVer
 			}
 		}
 		return root;
-	}
-
-	private void sortVertices(final List<PolygonVertex> sweepline) {
-		sweepline.sort((left, right) -> {
-			final int difference = java.lang.Double.compare(left.y, right.y);
-			if (difference == 0) {
-				return java.lang.Double.compare(left.x, right.x);
-			} else {
-				return -difference;
-			}
-		});
 	}
 
 	public PolygonVertex cutIntoTwoPolygons(PolygonVertex targetVertex) {
