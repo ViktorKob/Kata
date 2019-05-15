@@ -4,6 +4,8 @@ import static java.lang.Math.PI;
 import static java.lang.Math.abs;
 import static java.lang.Math.atan2;
 import static net.thomas.kata.geometry.algorithms.PolygonUtilImpl.EPSILON;
+import static net.thomas.kata.geometry.algorithms.VertexRelation.ABOVE;
+import static net.thomas.kata.geometry.algorithms.VertexRelation.BELOW;
 import static net.thomas.kata.geometry.algorithms.VertexType.END;
 import static net.thomas.kata.geometry.algorithms.VertexType.MERGE;
 import static net.thomas.kata.geometry.algorithms.VertexType.REGULAR;
@@ -42,7 +44,6 @@ public class PolygonUtilImpl implements PolygonUtil {
 		public MonotonePolygonExtractor(Collection<PolygonVertex> polygons) {
 			edges = buildEdgeMap(polygons);
 			vertexTypes = determineVertexTypes(polygons);
-			new SweeplineBuilder();
 			sweepline = buildSweepline(polygons);
 			status = new StatusSearchTree();
 			monotonePolygons = new LinkedList<>();
@@ -77,22 +78,27 @@ public class PolygonUtilImpl implements PolygonUtil {
 		}
 
 		private VertexType getVertexType(PolygonVertex vertex) {
-			final double angle = calculateInteriorAngleFor(vertex);
-			if (vertex.y >= vertex.getBefore().y && vertex.y > vertex.getAfter().y) {
-				if (angle < PI) {
-					return START;
-				} else {
-					return SPLIT;
-				}
+			final VertexRelation before = determineRelation(vertex, vertex.getBefore());
+			final VertexRelation after = determineRelation(vertex, vertex.getAfter());
+			final double interiorAngle = calculateInteriorAngleFor(vertex);
+
+			if (oneIsBelowAndOneIsAbove(before, after)) {
+				return REGULAR;
+			} else if (before == BELOW) {
+				return interiorAngle < PI ? END : MERGE;
+			} else {
+				return interiorAngle < PI ? START : SPLIT;
 			}
-			if (vertex.y <= vertex.getBefore().y && vertex.y < vertex.getAfter().y) {
-				if (angle < PI) {
-					return END;
-				} else {
-					return MERGE;
-				}
+		}
+
+		private VertexRelation determineRelation(PolygonVertex vertex, PolygonVertex neighbour) {
+			if (vertex.y > neighbour.y) {
+				return ABOVE;
+			} else if (vertex.y < neighbour.y) {
+				return BELOW;
+			} else {
+				return vertex.x < neighbour.x ? ABOVE : BELOW;
 			}
-			return REGULAR;
 		}
 
 		private double calculateInteriorAngleFor(PolygonVertex vertex) {
@@ -105,13 +111,17 @@ public class PolygonUtilImpl implements PolygonUtil {
 				return PI;
 			}
 			return angle;
+		}
 
+		private boolean oneIsBelowAndOneIsAbove(final VertexRelation before, final VertexRelation after) {
+			return before != after;
 		}
 
 		public Collection<PolygonVertex> calculateMonotonePolygons() {
 			monotonePolygons.clear();
 			for (final PolygonVertex vertex : sweepline) {
 				final VertexType vertexType = vertexTypes.get(vertex);
+				System.out.println(vertex + ": " + vertexType);
 				switch (vertexType) {
 					case START:
 						handleStartVertex(vertex);
@@ -190,13 +200,18 @@ public class PolygonUtilImpl implements PolygonUtil {
 		}
 
 		private boolean interiorIsToTheRight(PolygonVertex vertex) {
-			return vertex.getAfter().y < vertex.getBefore().y;
+			return vertex.getAfter().y < vertex.getBefore().y || vertex.getAfter().y == vertex.getBefore().y && vertex.getAfter().x > vertex.getBefore().x;
 		}
 
 		private PolygonVertex cutOutMonotonePiece(PolygonVertex before, PolygonVertex after) {
 			return before.cutIntoTwoPolygons(after);
 		}
 	}
+}
+
+enum VertexRelation {
+	ABOVE,
+	BELOW
 }
 
 enum VertexType {

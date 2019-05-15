@@ -9,6 +9,7 @@ import java.awt.BasicStroke;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.swing.JFrame;
@@ -28,7 +29,11 @@ public class PolygonRenderer extends JFrame {
 	private static final int ROOF = 600;
 
 	private static final PolygonVertex SIMPLE_CLEAN_SAMPLE = new PolygonBuilder()
-			.add(new PolygonVertex(8, 10), new PolygonVertex(0, 10), new PolygonVertex(-8, -10), new PolygonVertex(0, -10))
+			.add(new PolygonVertex(10, 10), new PolygonVertex(0, 10), new PolygonVertex(-10, -10), new PolygonVertex(0, -10))
+			.build();
+	private static final PolygonVertex COLINEAR_SAMPLE = new PolygonBuilder()
+			.add(new PolygonVertex(10, 10), new PolygonVertex(6, 10), new PolygonVertex(3, 10), new PolygonVertex(0, 10), new PolygonVertex(-10, 0),
+					new PolygonVertex(-6, 0), new PolygonVertex(-3, 0), new PolygonVertex(0, 0))
 			.build();
 	private static final PolygonVertex SIMPLE_SAMPLE_WITH_CUTS = new PolygonBuilder()
 			.add(new PolygonVertex(0, -1), new PolygonVertex(10, -10), new PolygonVertex(9, 0), new PolygonVertex(10, 10), new PolygonVertex(0, 1),
@@ -39,19 +44,27 @@ public class PolygonRenderer extends JFrame {
 					new PolygonVertex(-4, 8), new PolygonVertex(-1, 4), new PolygonVertex(-2, 2), new PolygonVertex(-5.6, 4), new PolygonVertex(-6, -2),
 					new PolygonVertex(-2.4, -6), new PolygonVertex(0, -4), new PolygonVertex(3, -10), new PolygonVertex(2.8, 0), new PolygonVertex(10, -2))
 			.build();
+	private static final PolygonVertex SIMPLE_CLEAN_SAMPLE_HOLE = new PolygonBuilder()
+			.add(new PolygonVertex(4, 5), new PolygonVertex(0, -6), new PolygonVertex(-4, -5), new PolygonVertex(0, 6))
+			.build();
+	private static final PolygonVertex COLINEAR_SAMPLE_HOLE = new PolygonBuilder()
+			.add(new PolygonVertex(0, 7), new PolygonVertex(1.5, 7), new PolygonVertex(3, 7), new PolygonVertex(5, 7), new PolygonVertex(0, 2),
+					new PolygonVertex(-1.5, 2), new PolygonVertex(-3, 2), new PolygonVertex(-5, 2))
+			.build();
 
 	private final Collection<PolygonVertex> monotonePolygons;
 	private final Collection<PolygonVertex> originalPolygons;
 
 	public static void main(String[] args) {
-		final Collection<PolygonVertex> polygons = combinePolygons(SIMPLE_CLEAN_SAMPLE, SIMPLE_SAMPLE_WITH_CUTS, BOOK_EXAMPLE_POLYGON);
 		final PolygonUtil util = new PolygonUtilImpl();
+		Collection<PolygonVertex> polygons = combineSimplePolygons(SIMPLE_CLEAN_SAMPLE, COLINEAR_SAMPLE, SIMPLE_SAMPLE_WITH_CUTS, BOOK_EXAMPLE_POLYGON);
+		polygons = appendHoles(polygons, SIMPLE_CLEAN_SAMPLE_HOLE, COLINEAR_SAMPLE_HOLE);
 		final Collection<PolygonVertex> monotoneParts = util.getMonotoneParts(polygons);
 		final PolygonRenderer renderer = new PolygonRenderer(polygons, monotoneParts);
 		renderer.setVisible(true);
 	}
 
-	private static List<PolygonVertex> combinePolygons(PolygonVertex... polygons) {
+	private static List<PolygonVertex> combineSimplePolygons(PolygonVertex... polygons) {
 		int index = 0;
 		for (final PolygonVertex polygon : polygons) {
 			for (final PolygonVertex vertex : polygon) {
@@ -60,6 +73,21 @@ public class PolygonRenderer extends JFrame {
 			index++;
 		}
 		return asList(polygons);
+	}
+
+	private static Collection<PolygonVertex> appendHoles(Collection<PolygonVertex> polygons, PolygonVertex... holes) {
+		final List<PolygonVertex> mergedPolygons = new LinkedList<>(polygons);
+		int index = 0;
+		for (final PolygonVertex hole : holes) {
+			if (hole != null) {
+				for (final PolygonVertex vertex : hole) {
+					vertex.x = vertex.x + index * NEIGHBOUR_OFFSET;
+				}
+				mergedPolygons.add(hole);
+			}
+			index++;
+		}
+		return mergedPolygons;
 	}
 
 	public PolygonRenderer(Collection<PolygonVertex> originalPolygons, Collection<PolygonVertex> monotonePolygons) {
