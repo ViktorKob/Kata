@@ -121,7 +121,6 @@ public class PolygonUtilImpl implements PolygonUtil {
 			monotonePolygons.clear();
 			for (final PolygonVertex vertex : sweepline) {
 				final VertexType vertexType = vertexTypes.get(vertex);
-				System.out.println(vertex + ": " + vertexType);
 				switch (vertexType) {
 					case START:
 						handleStartVertex(vertex);
