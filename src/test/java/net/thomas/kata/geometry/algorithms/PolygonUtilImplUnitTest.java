@@ -82,19 +82,48 @@ public class PolygonUtilImplUnitTest {
 	}
 
 	@Test
-	public void shouldHandleSplitCasesCorrectly() {
+	public void shouldHandleRegularCasesCorrectly() {
+		final PolygonVertex vertex1 = new PolygonVertex(0, 0);
+		final PolygonVertex vertex2 = new PolygonVertex(4, 0);
+		final PolygonVertex vertex3 = new PolygonVertex(4, 4);
+		final PolygonVertex vertex4 = new PolygonVertex(4, 6);
+		final PolygonVertex vertex5 = new PolygonVertex(3, 5);
+		final PolygonVertex vertex6 = new PolygonVertex(2, 6);
+		final PolygonVertex vertex7 = new PolygonVertex(1, 3);
+		final PolygonVertex vertex8 = new PolygonVertex(0, 4);
+		final PolygonVertex vertex9 = new PolygonVertex(0, 1);
+		final PolygonVertex polygon = builder.add(vertex1, vertex2, vertex3, vertex4, vertex5, vertex6, vertex7, vertex8, vertex9).build();
+		final Iterator<PolygonVertex> monotoneParts = util.getMonotoneParts(asList(polygon)).iterator();
+		assertEquals(vertex3, monotoneParts.next());
+		assertEquals(vertex7, monotoneParts.next());
+		assertEquals(vertex2, monotoneParts.next());
+		assertFalse(monotoneParts.hasNext());
+	}
+
+	@Test
+	public void shouldHandleSplitCaseCorrectly() {
 		final PolygonVertex vertex1 = new PolygonVertex(0, 0);
 		final PolygonVertex vertex2 = new PolygonVertex(1, 1);
 		final PolygonVertex vertex3 = new PolygonVertex(2, 0);
-		final PolygonVertex vertex4 = new PolygonVertex(3, 1);
-		final PolygonVertex vertex5 = new PolygonVertex(4, 0);
-		final PolygonVertex vertex6 = new PolygonVertex(4, 3);
-		final PolygonVertex vertex7 = new PolygonVertex(0, 3);
-		final PolygonVertex polygon = builder.add(vertex1, vertex2, vertex3, vertex4, vertex5, vertex6, vertex7).build();
+		final PolygonVertex vertex6 = new PolygonVertex(2, 2);
+		final PolygonVertex vertex7 = new PolygonVertex(0, 2);
+		final PolygonVertex polygon = builder.add(vertex1, vertex2, vertex3, vertex6, vertex7).build();
 		final Iterator<PolygonVertex> monotoneParts = util.getMonotoneParts(asList(polygon)).iterator();
 		assertEquals(vertex1, monotoneParts.next());
 		assertEquals(vertex3, monotoneParts.next());
-		assertEquals(vertex5, monotoneParts.next());
+		assertFalse(monotoneParts.hasNext());
+	}
+
+	@Test
+	public void shouldHandleEndCasesCorrectly() {
+		final PolygonVertex vertex1 = new PolygonVertex(0, 2);
+		final PolygonVertex vertex2 = new PolygonVertex(1, 0);
+		final PolygonVertex vertex3 = new PolygonVertex(2, 2);
+		final PolygonVertex vertex4 = new PolygonVertex(1, 1);
+		final PolygonVertex polygon = builder.add(vertex1, vertex2, vertex3, vertex4).build();
+		final Iterator<PolygonVertex> monotoneParts = util.getMonotoneParts(asList(polygon)).iterator();
+		assertEquals(vertex2, monotoneParts.next());
+		assertEquals(vertex2, monotoneParts.next());
 		assertFalse(monotoneParts.hasNext());
 	}
 }
