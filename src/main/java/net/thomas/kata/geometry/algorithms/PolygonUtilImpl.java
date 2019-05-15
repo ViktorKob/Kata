@@ -107,6 +107,9 @@ public class PolygonUtilImpl implements PolygonUtil {
 			if (angle < 0) {
 				angle += PI * 2;
 			}
+			if (abs(angle) < EPSILON) {
+				return 0.0;
+			}
 			if (abs(angle - PI) < EPSILON) {
 				return PI;
 			}
@@ -219,11 +222,6 @@ enum VertexType {
 	REGULAR,
 	SPLIT,
 	MERGE
-}
-
-enum Direction {
-	CLOCKWISE,
-	COUNTERCLOCKWISE
 }
 
 class SweeplineBuilder {

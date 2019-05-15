@@ -20,8 +20,8 @@ import net.thomas.kata.geometry.objects.PolygonVertex;
 
 public class PolygonRenderer extends JFrame {
 	private static final long serialVersionUID = 1L;
-	private static final int SCREEN_HEIGHT = 768;
-	private static final int SCREEN_WIDTH = 1600;
+	private static final int SCREEN_HEIGHT = 700;
+	private static final int SCREEN_WIDTH = 1800;
 	private static final int POINT_DIAMETER = 15;
 	private static final int ZOOM_FACTOR = 10;
 	private static final int NEIGHBOUR_OFFSET = 30;
@@ -38,6 +38,10 @@ public class PolygonRenderer extends JFrame {
 	private static final PolygonVertex SIMPLE_SAMPLE_WITH_CUTS = new PolygonBuilder()
 			.add(new PolygonVertex(0, -1), new PolygonVertex(10, -10), new PolygonVertex(9, 0), new PolygonVertex(10, 10), new PolygonVertex(0, 1),
 					new PolygonVertex(-10, 10), new PolygonVertex(-9, 0), new PolygonVertex(-10, -10))
+			.build();
+	private static final PolygonVertex MERGE_CASES = new PolygonBuilder()
+			.add(new PolygonVertex(0, 0), new PolygonVertex(12, 0), new PolygonVertex(12, 8), new PolygonVertex(10, 6), new PolygonVertex(8, 8),
+					new PolygonVertex(6, 4), new PolygonVertex(4, 6), new PolygonVertex(2, 4), new PolygonVertex(0, 8))
 			.build();
 	private static final PolygonVertex BOOK_EXAMPLE_POLYGON = new PolygonBuilder()
 			.add(new PolygonVertex(12, 6), new PolygonVertex(8, 4), new PolygonVertex(8, 10), new PolygonVertex(2, 8.2), new PolygonVertex(0, 10),
@@ -57,7 +61,8 @@ public class PolygonRenderer extends JFrame {
 
 	public static void main(String[] args) {
 		final PolygonUtil util = new PolygonUtilImpl();
-		Collection<PolygonVertex> polygons = combineSimplePolygons(SIMPLE_CLEAN_SAMPLE, COLINEAR_SAMPLE, SIMPLE_SAMPLE_WITH_CUTS, BOOK_EXAMPLE_POLYGON);
+		Collection<PolygonVertex> polygons = combineSimplePolygons(SIMPLE_CLEAN_SAMPLE, COLINEAR_SAMPLE, SIMPLE_SAMPLE_WITH_CUTS, MERGE_CASES,
+				BOOK_EXAMPLE_POLYGON);
 		polygons = appendHoles(polygons, SIMPLE_CLEAN_SAMPLE_HOLE, COLINEAR_SAMPLE_HOLE);
 		final Collection<PolygonVertex> monotoneParts = util.getMonotoneParts(polygons);
 		final PolygonRenderer renderer = new PolygonRenderer(polygons, monotoneParts);

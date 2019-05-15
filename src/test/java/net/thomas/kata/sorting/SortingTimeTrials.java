@@ -14,8 +14,7 @@ import java.util.concurrent.Callable;
 
 public class SortingTimeTrials {
 	public static void main(String[] args) throws Exception {
-		final Collection<Integer> elements = createUnsortedElements(100);
-		System.out.println(elements);
+		final Collection<Integer> elements = createUnsortedElements(100000);
 		runOnUnsortedSamples(elements);
 		runOnSortedSamples(elements);
 	}
