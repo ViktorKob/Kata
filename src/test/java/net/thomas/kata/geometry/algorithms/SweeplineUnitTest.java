@@ -11,6 +11,49 @@ import net.thomas.kata.geometry.objects.PolygonBuilder;
 import net.thomas.kata.geometry.objects.PolygonVertex;
 
 public class SweeplineUnitTest {
+	@Test
+	public void shouldKeepOrderForRegularCase() {
+		final PolygonVertex vertex1 = new PolygonVertex(0, 2);
+		final PolygonVertex vertex2 = new PolygonVertex(0, 1);
+		final PolygonVertex polygon = new PolygonBuilder().add(vertex1, vertex2).build();
+		final Iterator<PolygonVertex> sweepline = new SweeplineBuilder().add(polygon).build().iterator();
+		assertEquals(vertex1, sweepline.next());
+		assertEquals(vertex2, sweepline.next());
+		assertFalse(sweepline.hasNext());
+	}
+
+	@Test
+	public void shouldReorderForRegularCase() {
+		final PolygonVertex vertex1 = new PolygonVertex(0, 2);
+		final PolygonVertex vertex2 = new PolygonVertex(0, 1);
+		final PolygonVertex polygon = new PolygonBuilder().add(vertex2, vertex1).build();
+		final Iterator<PolygonVertex> sweepline = new SweeplineBuilder().add(polygon).build().iterator();
+		assertEquals(vertex1, sweepline.next());
+		assertEquals(vertex2, sweepline.next());
+		assertFalse(sweepline.hasNext());
+	}
+
+	@Test
+	public void shouldKeepOrderForCoplanarCase() {
+		final PolygonVertex vertex1 = new PolygonVertex(0, 1);
+		final PolygonVertex vertex2 = new PolygonVertex(1, 1);
+		final PolygonVertex polygon = new PolygonBuilder().add(vertex1, vertex2).build();
+		final Iterator<PolygonVertex> sweepline = new SweeplineBuilder().add(polygon).build().iterator();
+		assertEquals(vertex1, sweepline.next());
+		assertEquals(vertex2, sweepline.next());
+		assertFalse(sweepline.hasNext());
+	}
+
+	@Test
+	public void shouldReorderForCoplanarCase() {
+		final PolygonVertex vertex1 = new PolygonVertex(0, 1);
+		final PolygonVertex vertex2 = new PolygonVertex(1, 1);
+		final PolygonVertex polygon = new PolygonBuilder().add(vertex2, vertex1).build();
+		final Iterator<PolygonVertex> sweepline = new SweeplineBuilder().add(polygon).build().iterator();
+		assertEquals(vertex1, sweepline.next());
+		assertEquals(vertex2, sweepline.next());
+		assertFalse(sweepline.hasNext());
+	}
 
 	@Test
 	public void shouldGenerateCorrectSweepline() {
