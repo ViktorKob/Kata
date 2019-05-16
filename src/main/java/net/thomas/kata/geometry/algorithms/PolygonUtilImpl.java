@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import net.thomas.kata.geometry.PolygonUtil;
+import net.thomas.kata.geometry.objects.PolygonTriangle;
 import net.thomas.kata.geometry.objects.PolygonVertex;
 
 public class PolygonUtilImpl implements PolygonUtil {
@@ -30,9 +31,17 @@ public class PolygonUtilImpl implements PolygonUtil {
 		return new MonotonePolygonExtractor(polygons).calculateMonotonePolygons();
 	}
 
+	@Override
+	public Collection<PolygonTriangle> triangulateMonotonePolygons(Collection<PolygonVertex> monotonePolygons) {
+		return new MonotonePolygonTriangulator(monotonePolygons).buildTriangleGraphs();
+	}
+
 	/***
 	 * Based on Berg, Krevald, Overmars & Schwarzkopf - Computational Geometry (2nd ed.) <BR>
 	 * Chapter 3 - Polygon Triangulation
+	 *
+	 * Polygons must be counterclockwise and disjoint for the algorithm to run correctly. Holes can be
+	 * added as clockwise polygons fully contained within other polygons.
 	 */
 	static class MonotonePolygonExtractor {
 		private final Map<PolygonVertex, Edge> edges;
@@ -207,6 +216,22 @@ public class PolygonUtilImpl implements PolygonUtil {
 
 		private PolygonVertex cutOutMonotonePiece(PolygonVertex before, PolygonVertex after) {
 			return before.cutIntoTwoPolygons(after);
+		}
+	}
+
+	/***
+	 * Based on Berg, Krevald, Overmars & Schwarzkopf - Computational Geometry (2nd ed.) <BR>
+	 * Chapter 3 - Polygon Triangulation
+	 */
+	static class MonotonePolygonTriangulator {
+		private final Collection<PolygonVertex> monotonePolygons;
+
+		public MonotonePolygonTriangulator(Collection<PolygonVertex> monotonePolygons) {
+			this.monotonePolygons = monotonePolygons;
+		}
+
+		public Collection<PolygonTriangle> buildTriangleGraphs() {
+			return null;
 		}
 	}
 }
