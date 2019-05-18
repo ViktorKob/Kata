@@ -16,6 +16,7 @@ import javax.swing.JFrame;
 
 import net.thomas.kata.geometry.algorithms.PolygonUtilImpl;
 import net.thomas.kata.geometry.objects.PolygonBuilder;
+import net.thomas.kata.geometry.objects.PolygonTriangle;
 import net.thomas.kata.geometry.objects.PolygonVertex;
 
 public class PolygonRenderer extends JFrame {
@@ -57,14 +58,16 @@ public class PolygonRenderer extends JFrame {
 
 	private final Collection<PolygonVertex> monotonePolygons;
 	private final Collection<PolygonVertex> originalPolygons;
+	private final Collection<PolygonTriangle> triangleGraphs;
 
 	public static void main(String[] args) {
 		final PolygonUtil util = new PolygonUtilImpl();
 		Collection<PolygonVertex> polygons = combineSimplePolygons(SIMPLE_CLEAN_SAMPLE, COLINEAR_SAMPLE, SIMPLE_SAMPLE_WITH_CUTS, MERGE_CASES,
 				BOOK_EXAMPLE_POLYGON);
 		polygons = appendHoles(polygons, SIMPLE_CLEAN_SAMPLE_HOLE, COLINEAR_SAMPLE_HOLE);
-		final Collection<PolygonVertex> monotoneParts = util.getMonotoneParts(polygons);
-		final PolygonRenderer renderer = new PolygonRenderer(polygons, monotoneParts);
+		final Collection<PolygonVertex> monotonePolygons = util.getMonotoneParts(polygons);
+		final Collection<PolygonTriangle> triangleGraphs = util.triangulateMonotonePolygons(monotonePolygons);
+		final PolygonRenderer renderer = new PolygonRenderer(polygons, monotonePolygons, triangleGraphs);
 		renderer.setVisible(true);
 	}
 
@@ -94,9 +97,10 @@ public class PolygonRenderer extends JFrame {
 		return mergedPolygons;
 	}
 
-	public PolygonRenderer(Collection<PolygonVertex> originalPolygons, Collection<PolygonVertex> monotonePolygons) {
+	public PolygonRenderer(Collection<PolygonVertex> originalPolygons, Collection<PolygonVertex> monotonePolygons, Collection<PolygonTriangle> triangleGraphs) {
 		this.originalPolygons = originalPolygons;
 		this.monotonePolygons = monotonePolygons;
+		this.triangleGraphs = triangleGraphs;
 		setLocation(500, 400);
 		setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -104,18 +108,19 @@ public class PolygonRenderer extends JFrame {
 
 	@Override
 	public void paint(Graphics graphics) {
-		((Graphics2D) graphics).setStroke(new BasicStroke(3.0f));
-		graphics.setColor(BLACK);
-		for (final PolygonVertex polygon : monotonePolygons) {
-			drawVertices(polygon, graphics);
+		((Graphics2D) graphics).setStroke(new BasicStroke(6.0f));
+		graphics.setColor(BLUE);
+		for (final PolygonVertex polygon : originalPolygons) {
+			drawEdges(polygon, graphics);
 		}
+		((Graphics2D) graphics).setStroke(new BasicStroke(4.0f));
 		graphics.setColor(RED);
 		for (final PolygonVertex polygon : monotonePolygons) {
 			drawEdges(polygon, graphics);
 		}
-		graphics.setColor(BLUE);
-		for (final PolygonVertex polygon : originalPolygons) {
-			drawEdges(polygon, graphics);
+		graphics.setColor(BLACK);
+		for (final PolygonVertex polygon : monotonePolygons) {
+			drawVertices(polygon, graphics);
 		}
 	}
 

@@ -28,6 +28,7 @@ public class VertexSideMapForMonotonePolygonUnitTest {
 		final PolygonVertex vertex2 = new PolygonVertex(0, 0);
 		new PolygonBuilder().add(vertex1, vertex2).build();
 		final VertexSideMapForMonotonePolygon sides = new VertexSideMapForMonotonePolygon(vertex1);
+		assertEquals(vertex2, sides.getBottom());
 		assertEquals(BOTTOM, sides.getSide(vertex2));
 	}
 

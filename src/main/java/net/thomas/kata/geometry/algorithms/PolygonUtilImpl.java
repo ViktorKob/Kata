@@ -249,23 +249,56 @@ public class PolygonUtilImpl implements PolygonUtil {
 		private PolygonTriangle buildTriangleGraph(PolygonVertex monotonePolygon) {
 			final Map<PolygonVertex, PolygonTriangle> triangles = new HashMap<>();
 			final Iterator<PolygonVertex> sweepline = new SweeplineBuilder().addPolygon(monotonePolygon).build().iterator();
-			final Stack<PolygonVertex> stack = new Stack<>();
+			final Stack<PolygonVertex> unprocessedVertices = new Stack<>();
 			final PolygonVertex firstVertex = sweepline.next();
 			final VertexSideMapForMonotonePolygon sideMap = new VertexSideMapForMonotonePolygon(firstVertex);
-			stack.push(firstVertex);
-			stack.push(sweepline.next());
+			unprocessedVertices.push(firstVertex);
+			PolygonVertex next = sweepline.next();
+			VertexSide currentSide = sideMap.getSide(next);
+			unprocessedVertices.push(sweepline.next());
 			while (sweepline.hasNext()) {
-
+				next = sweepline.next();
+				if (next != sideMap.getBottom()) {
+					final VertexSide nextSide = sideMap.getSide(next);
+					if (nextSide != currentSide) {
+						final Stack<PolygonVertex> constructionStack = new Stack<>();
+						while (!unprocessedVertices.isEmpty()) {
+							constructionStack.push(unprocessedVertices.pop());
+						}
+						PolygonVertex nextOtherSideVertex = constructionStack.pop();
+						do {
+							// Add triangles except the last one
+							nextOtherSideVertex = constructionStack.pop();
+						} while (!constructionStack.isEmpty());
+						unprocessedVertices.push(nextOtherSideVertex);
+					} else {
+						PolygonVertex lastVertex = unprocessedVertices.pop();
+						while (edgeIsInsidePolygon(currentSide, unprocessedVertices.peek(), lastVertex, next)) {
+							// Add triangle
+							lastVertex = unprocessedVertices.pop();
+						}
+						unprocessedVertices.push(lastVertex);
+					}
+					unprocessedVertices.push(next);
+					currentSide = nextSide;
+				}
 			}
-			return null;
+			// return triangles.values().iterator().next();
+			return new PolygonTriangle(new PolygonVertex(0, 0), new PolygonVertex(1, 1), new PolygonVertex(0, 1));
+		}
+
+		private boolean edgeIsInsidePolygon(VertexSide currentSide, PolygonVertex candidate, PolygonVertex previousCandidate, PolygonVertex root) {
+			System.out.println(candidate);
+			return false;
 		}
 
 		static class VertexSideMapForMonotonePolygon {
 			private final Map<PolygonVertex, VertexSide> sides;
+			private final PolygonVertex bottom;
 
 			public VertexSideMapForMonotonePolygon(PolygonVertex top) {
 				sides = new HashMap<>(singletonMap(top, TOP));
-				final PolygonVertex bottom = determineBottomVertex(top);
+				bottom = determineBottomVertex(top);
 				sides.put(bottom, BOTTOM);
 				getLeftSide(top, bottom).forEach((vertex) -> sides.put(vertex, LEFT));
 				getRightSide(top, bottom).forEach((vertex) -> sides.put(vertex, RIGHT));
@@ -300,6 +333,10 @@ public class PolygonUtilImpl implements PolygonUtil {
 
 			public VertexSide getSide(PolygonVertex vertex) {
 				return sides.get(vertex);
+			}
+
+			public PolygonVertex getBottom() {
+				return bottom;
 			}
 		}
 	}
