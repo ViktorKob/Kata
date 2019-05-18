@@ -16,7 +16,7 @@ public class SweeplineUnitTest {
 		final PolygonVertex vertex1 = new PolygonVertex(0, 2);
 		final PolygonVertex vertex2 = new PolygonVertex(0, 1);
 		final PolygonVertex polygon = new PolygonBuilder().add(vertex1, vertex2).build();
-		final Iterator<PolygonVertex> sweepline = new SweeplineBuilder().add(polygon).build().iterator();
+		final Iterator<PolygonVertex> sweepline = new SweeplineBuilder().addPolygon(polygon).build().iterator();
 		assertEquals(vertex1, sweepline.next());
 		assertEquals(vertex2, sweepline.next());
 		assertFalse(sweepline.hasNext());
@@ -27,7 +27,7 @@ public class SweeplineUnitTest {
 		final PolygonVertex vertex1 = new PolygonVertex(0, 2);
 		final PolygonVertex vertex2 = new PolygonVertex(0, 1);
 		final PolygonVertex polygon = new PolygonBuilder().add(vertex2, vertex1).build();
-		final Iterator<PolygonVertex> sweepline = new SweeplineBuilder().add(polygon).build().iterator();
+		final Iterator<PolygonVertex> sweepline = new SweeplineBuilder().addPolygon(polygon).build().iterator();
 		assertEquals(vertex1, sweepline.next());
 		assertEquals(vertex2, sweepline.next());
 		assertFalse(sweepline.hasNext());
@@ -38,7 +38,7 @@ public class SweeplineUnitTest {
 		final PolygonVertex vertex1 = new PolygonVertex(0, 1);
 		final PolygonVertex vertex2 = new PolygonVertex(1, 1);
 		final PolygonVertex polygon = new PolygonBuilder().add(vertex1, vertex2).build();
-		final Iterator<PolygonVertex> sweepline = new SweeplineBuilder().add(polygon).build().iterator();
+		final Iterator<PolygonVertex> sweepline = new SweeplineBuilder().addPolygon(polygon).build().iterator();
 		assertEquals(vertex1, sweepline.next());
 		assertEquals(vertex2, sweepline.next());
 		assertFalse(sweepline.hasNext());
@@ -49,7 +49,7 @@ public class SweeplineUnitTest {
 		final PolygonVertex vertex1 = new PolygonVertex(0, 1);
 		final PolygonVertex vertex2 = new PolygonVertex(1, 1);
 		final PolygonVertex polygon = new PolygonBuilder().add(vertex2, vertex1).build();
-		final Iterator<PolygonVertex> sweepline = new SweeplineBuilder().add(polygon).build().iterator();
+		final Iterator<PolygonVertex> sweepline = new SweeplineBuilder().addPolygon(polygon).build().iterator();
 		assertEquals(vertex1, sweepline.next());
 		assertEquals(vertex2, sweepline.next());
 		assertFalse(sweepline.hasNext());
@@ -66,7 +66,7 @@ public class SweeplineUnitTest {
 		final PolygonVertex vertex7 = new PolygonVertex(-10, -10);
 		final PolygonVertex vertex8 = new PolygonVertex(10, -10);
 		final PolygonVertex polygon = new PolygonBuilder().add(vertex4, vertex7, vertex6, vertex8, vertex5, vertex2, vertex3, vertex1).build();
-		final Iterator<PolygonVertex> sweepline = new SweeplineBuilder().add(polygon).build().iterator();
+		final Iterator<PolygonVertex> sweepline = new SweeplineBuilder().addPolygon(polygon).build().iterator();
 		assertEquals(vertex1, sweepline.next());
 		assertEquals(vertex2, sweepline.next());
 		assertEquals(vertex3, sweepline.next());

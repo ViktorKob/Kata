@@ -20,13 +20,12 @@ import net.thomas.kata.geometry.objects.PolygonVertex;
 
 public class PolygonRenderer extends JFrame {
 	private static final long serialVersionUID = 1L;
-	private static final int SCREEN_HEIGHT = 700;
+	private static final int SCREEN_HEIGHT = 400;
 	private static final int SCREEN_WIDTH = 1800;
 	private static final int POINT_DIAMETER = 15;
 	private static final int ZOOM_FACTOR = 10;
 	private static final int NEIGHBOUR_OFFSET = 30;
 	private static final int DISPLACEMENT = 200;
-	private static final int ROOF = 600;
 
 	private static final PolygonVertex SIMPLE_CLEAN_SAMPLE = new PolygonBuilder()
 			.add(new PolygonVertex(10, 10), new PolygonVertex(0, 10), new PolygonVertex(-10, -10), new PolygonVertex(0, -10))
@@ -154,6 +153,6 @@ public class PolygonRenderer extends JFrame {
 	}
 
 	private int translateYIntoFramespace(double value) {
-		return ROOF - (int) (value * ZOOM_FACTOR + DISPLACEMENT);
+		return SCREEN_HEIGHT - (int) (value * ZOOM_FACTOR + DISPLACEMENT);
 	}
 }

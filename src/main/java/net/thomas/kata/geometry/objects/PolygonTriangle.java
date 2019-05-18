@@ -4,6 +4,8 @@ import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.VE
 import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.VERTEX_2;
 import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.VERTEX_3;
 
+import java.util.Arrays;
+
 /***
  * Counterclockwise representation of a triangle with neighbour relations. Neighbour1 is connected
  * by edge(VERTEX_1 -> VERTEX_2), neighbour2 by edge(VERTEX_2 -> VERTEX_3), and so forth. Neighbours
@@ -42,5 +44,35 @@ public class PolygonTriangle {
 
 	public PolygonTriangle getNeighbour(TriangleVertex vertexId) {
 		return neighbours[vertexId.ordinal()];
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + Arrays.hashCode(neighbours);
+		result = prime * result + Arrays.hashCode(vertices);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (!(obj instanceof PolygonTriangle)) {
+			return false;
+		}
+		final PolygonTriangle other = (PolygonTriangle) obj;
+		if (!Arrays.equals(neighbours, other.neighbours)) {
+			return false;
+		}
+		if (!Arrays.equals(vertices, other.vertices)) {
+			return false;
+		}
+		return true;
 	}
 }

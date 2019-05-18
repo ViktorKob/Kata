@@ -3,9 +3,14 @@ package net.thomas.kata.geometry.algorithms;
 import static java.lang.Math.PI;
 import static java.lang.Math.abs;
 import static java.lang.Math.atan2;
+import static java.util.Collections.singletonMap;
 import static net.thomas.kata.geometry.algorithms.PolygonUtilImpl.EPSILON;
 import static net.thomas.kata.geometry.algorithms.VertexRelation.ABOVE;
 import static net.thomas.kata.geometry.algorithms.VertexRelation.BELOW;
+import static net.thomas.kata.geometry.algorithms.VertexSide.BOTTOM;
+import static net.thomas.kata.geometry.algorithms.VertexSide.LEFT;
+import static net.thomas.kata.geometry.algorithms.VertexSide.RIGHT;
+import static net.thomas.kata.geometry.algorithms.VertexSide.TOP;
 import static net.thomas.kata.geometry.algorithms.VertexType.END;
 import static net.thomas.kata.geometry.algorithms.VertexType.MERGE;
 import static net.thomas.kata.geometry.algorithms.VertexType.REGULAR;
@@ -15,9 +20,12 @@ import static net.thomas.kata.geometry.algorithms.VertexType.START;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
+import java.util.function.Function;
 
 import net.thomas.kata.geometry.PolygonUtil;
 import net.thomas.kata.geometry.objects.PolygonTriangle;
@@ -81,7 +89,7 @@ public class PolygonUtilImpl implements PolygonUtil {
 		private List<PolygonVertex> buildSweepline(Collection<PolygonVertex> polygons) {
 			final SweeplineBuilder builder = new SweeplineBuilder();
 			for (final PolygonVertex vertex : polygons) {
-				builder.add(vertex);
+				builder.addPolygon(vertex);
 			}
 			return builder.build();
 		}
@@ -231,7 +239,68 @@ public class PolygonUtilImpl implements PolygonUtil {
 		}
 
 		public Collection<PolygonTriangle> buildTriangleGraphs() {
+			final Collection<PolygonTriangle> triangleGraphs = new LinkedList<>();
+			for (final PolygonVertex monotonePolygon : monotonePolygons) {
+				triangleGraphs.add(buildTriangleGraph(monotonePolygon));
+			}
+			return triangleGraphs;
+		}
+
+		private PolygonTriangle buildTriangleGraph(PolygonVertex monotonePolygon) {
+			final Map<PolygonVertex, PolygonTriangle> triangles = new HashMap<>();
+			final Iterator<PolygonVertex> sweepline = new SweeplineBuilder().addPolygon(monotonePolygon).build().iterator();
+			final Stack<PolygonVertex> stack = new Stack<>();
+			final PolygonVertex firstVertex = sweepline.next();
+			final VertexSideMapForMonotonePolygon sideMap = new VertexSideMapForMonotonePolygon(firstVertex);
+			stack.push(firstVertex);
+			stack.push(sweepline.next());
+			while (sweepline.hasNext()) {
+
+			}
 			return null;
+		}
+
+		static class VertexSideMapForMonotonePolygon {
+			private final Map<PolygonVertex, VertexSide> sides;
+
+			public VertexSideMapForMonotonePolygon(PolygonVertex top) {
+				sides = new HashMap<>(singletonMap(top, TOP));
+				final PolygonVertex bottom = determineBottomVertex(top);
+				sides.put(bottom, BOTTOM);
+				getLeftSide(top, bottom).forEach((vertex) -> sides.put(vertex, LEFT));
+				getRightSide(top, bottom).forEach((vertex) -> sides.put(vertex, RIGHT));
+			}
+
+			private PolygonVertex determineBottomVertex(PolygonVertex topVertex) {
+				PolygonVertex current = topVertex;
+				do {
+					current = current.getAfter();
+				} while (current.getAfter().y <= current.getY());
+				return current;
+			}
+
+			private List<PolygonVertex> getLeftSide(PolygonVertex top, final PolygonVertex bottom) {
+				return determineSide(top, bottom, PolygonVertex::getAfter);
+			}
+
+			private List<PolygonVertex> getRightSide(PolygonVertex top, final PolygonVertex bottom) {
+				return determineSide(top, bottom, PolygonVertex::getBefore);
+			}
+
+			private List<PolygonVertex> determineSide(PolygonVertex top, PolygonVertex bottom, Function<PolygonVertex, PolygonVertex> next) {
+				final List<PolygonVertex> side = new LinkedList<>();
+				PolygonVertex current = top;
+				do {
+					current = next.apply(current);
+					side.add(current);
+				} while (current != bottom);
+				side.remove(current);
+				return side;
+			}
+
+			public VertexSide getSide(PolygonVertex vertex) {
+				return sides.get(vertex);
+			}
 		}
 	}
 }
@@ -239,6 +308,13 @@ public class PolygonUtilImpl implements PolygonUtil {
 enum VertexRelation {
 	ABOVE,
 	BELOW
+}
+
+enum VertexSide {
+	TOP,
+	LEFT,
+	RIGHT,
+	BOTTOM
 }
 
 enum VertexType {
@@ -256,7 +332,7 @@ class SweeplineBuilder {
 		polygons = new LinkedList<>();
 	}
 
-	public SweeplineBuilder add(PolygonVertex polygon) {
+	public SweeplineBuilder addPolygon(PolygonVertex polygon) {
 		polygons.add(polygon);
 		return this;
 	}
