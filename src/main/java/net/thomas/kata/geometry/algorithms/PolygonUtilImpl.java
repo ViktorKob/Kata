@@ -247,34 +247,35 @@ public class PolygonUtilImpl implements PolygonUtil {
 		}
 
 		private PolygonTriangle buildTriangleGraph(PolygonVertex monotonePolygon) {
-			final Map<PolygonVertex, PolygonTriangle> triangles = new HashMap<>();
+			System.out.println(monotonePolygon.allToString());
+			final TriangleGraphBuilder builder = new TriangleGraphBuilder();
 			final Iterator<PolygonVertex> sweepline = new SweeplineBuilder().addPolygon(monotonePolygon).build().iterator();
 			final Stack<PolygonVertex> unprocessedVertices = new Stack<>();
 			final PolygonVertex firstVertex = sweepline.next();
 			final VertexSideMapForMonotonePolygon sideMap = new VertexSideMapForMonotonePolygon(firstVertex);
 			unprocessedVertices.push(firstVertex);
 			PolygonVertex next = sweepline.next();
+			unprocessedVertices.push(next);
 			VertexSide currentSide = sideMap.getSide(next);
-			unprocessedVertices.push(sweepline.next());
 			while (sweepline.hasNext()) {
 				next = sweepline.next();
 				if (next != sideMap.getBottom()) {
 					final VertexSide nextSide = sideMap.getSide(next);
 					if (nextSide != currentSide) {
-						final Stack<PolygonVertex> constructionStack = new Stack<>();
-						while (!unprocessedVertices.isEmpty()) {
-							constructionStack.push(unprocessedVertices.pop());
-						}
+						final Stack<PolygonVertex> constructionStack = reverseStack(unprocessedVertices);
 						PolygonVertex nextOtherSideVertex = constructionStack.pop();
+						PolygonVertex nextNextOtherSideVertex;
 						do {
-							// Add triangles except the last one
-							nextOtherSideVertex = constructionStack.pop();
+							nextNextOtherSideVertex = constructionStack.pop();
+							builder.add(buildTriangle(nextSide, next, nextOtherSideVertex, nextNextOtherSideVertex));
+							nextOtherSideVertex = nextNextOtherSideVertex;
 						} while (!constructionStack.isEmpty());
 						unprocessedVertices.push(nextOtherSideVertex);
 					} else {
 						PolygonVertex lastVertex = unprocessedVertices.pop();
-						while (edgeIsInsidePolygon(currentSide, unprocessedVertices.peek(), lastVertex, next)) {
+						while (!unprocessedVertices.isEmpty() && edgeIsInsidePolygon(currentSide, next, unprocessedVertices.peek(), lastVertex)) {
 							// Add triangle
+							System.out.println("Triangle! " + lastVertex);
 							lastVertex = unprocessedVertices.pop();
 						}
 						unprocessedVertices.push(lastVertex);
@@ -283,13 +284,61 @@ public class PolygonUtilImpl implements PolygonUtil {
 					currentSide = nextSide;
 				}
 			}
-			// return triangles.values().iterator().next();
-			return new PolygonTriangle(new PolygonVertex(0, 0), new PolygonVertex(1, 1), new PolygonVertex(0, 1));
+			final Stack<PolygonVertex> constructionStack = reverseStack(unprocessedVertices);
+			PolygonVertex secondLast = constructionStack.pop();
+			while (!constructionStack.isEmpty()) {
+				final PolygonVertex last = constructionStack.pop();
+				final PolygonTriangle triangle = buildTriangle(sideMap.getSide(last), next, last, secondLast);
+				builder.add(triangle);
+				secondLast = last;
+			}
+			return builder.build();
 		}
 
-		private boolean edgeIsInsidePolygon(VertexSide currentSide, PolygonVertex candidate, PolygonVertex previousCandidate, PolygonVertex root) {
-			System.out.println(candidate);
-			return false;
+		class TriangleGraphBuilder {
+			private final Stack<PolygonTriangle> triangles;
+
+			public TriangleGraphBuilder() {
+				triangles = new Stack<>();
+			}
+
+			public TriangleGraphBuilder add(PolygonTriangle triangle) {
+				while (!triangles.isEmpty() && triangle.isNeighbourTo(triangles.peek())) {
+					triangle.connect(triangles.pop());
+				}
+				triangles.push(triangle);
+				return this;
+			}
+
+			public PolygonTriangle build() {
+				return triangles.pop();
+			}
+		}
+
+		private Stack<PolygonVertex> reverseStack(final Stack<PolygonVertex> unprocessedVertices) {
+			final Stack<PolygonVertex> constructionStack = new Stack<>();
+			while (!unprocessedVertices.isEmpty()) {
+				constructionStack.push(unprocessedVertices.pop());
+			}
+			return constructionStack;
+		}
+
+		private PolygonTriangle buildTriangle(VertexSide side, PolygonVertex next, final PolygonVertex last, final PolygonVertex secondLast) {
+			PolygonTriangle triangle;
+			if (side == LEFT) {
+				triangle = new PolygonTriangle(secondLast, last, next);
+			} else {
+				triangle = new PolygonTriangle(secondLast, next, last);
+			}
+			return triangle;
+		}
+
+		private boolean edgeIsInsidePolygon(VertexSide currentSide, PolygonVertex current, PolygonVertex previous, PolygonVertex secondPrevious) {
+			final PolygonVertex a = current;
+			final PolygonVertex b = previous;
+			final PolygonVertex c = secondPrevious;
+			final double determinant = (c.x - b.x) * (b.y - a.y) - (b.x - a.x) * (c.y - b.y);
+			return currentSide == LEFT ? determinant < 0 : determinant > 0;
 		}
 
 		static class VertexSideMapForMonotonePolygon {
