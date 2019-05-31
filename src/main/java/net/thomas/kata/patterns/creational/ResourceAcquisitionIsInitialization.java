@@ -6,7 +6,7 @@ import java.io.StringReader;
 
 public class ResourceAcquisitionIsInitialization {
 	public static void main(String[] args) {
-		try (BufferedReader stream = new BufferedReader(new StringReader("Hello, World!"))) {
+		try (BufferedReader stream = new BufferedReader(new StringReader("Hello, World Resource!"))) {
 			System.out.println(stream.readLine());
 		} catch (final IOException e) {
 			e.printStackTrace();
