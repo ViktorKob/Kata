@@ -70,6 +70,7 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 	private boolean renderOriginal;
 	private boolean renderMonotones;
 	private boolean renderTriangles;
+	private boolean renderTriangleGraph;
 	private boolean renderVertices;
 
 	public static void main(String[] args) {
@@ -117,7 +118,7 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		addKeyListener(this);
-		renderOriginal = renderMonotones = renderTriangles = renderVertices = true;
+		renderOriginal = renderMonotones = renderTriangles = renderTriangleGraph = renderVertices = true;
 	}
 
 	@Override
@@ -126,31 +127,47 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		graphics.clearRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 		graphics.setComposite(AlphaComposite.getInstance(SRC_OVER));
 		if (renderTriangles) {
-			graphics.setStroke(new BasicStroke(4.0f));
-			graphics.setColor(new Color(.0f, 0.8f, 0.0f, 1.0f));
-			for (final PolygonTriangle triangle : triangleGraphs) {
-				drawEdges(triangle, graphics);
-			}
+			renderTriangles(graphics);
 		}
 		if (renderMonotones) {
-			graphics.setStroke(new BasicStroke(3.0f));
-			graphics.setColor(new Color(0.8f, .0f, .0f, 1.0f));
-			for (final PolygonVertex polygon : monotonePolygons) {
-				drawEdges(polygon, graphics);
-			}
+			renderMonotonePieces(graphics);
 		}
 		if (renderOriginal) {
-			graphics.setStroke(new BasicStroke(2.0f));
-			graphics.setColor(new Color(.0f, .0f, 1.0f, 1.0f));
-			for (final PolygonVertex polygon : originalPolygons) {
-				drawEdges(polygon, graphics);
-			}
+			renderOriginalPolygon(graphics);
 		}
 		if (renderVertices) {
-			graphics.setColor(new Color(.0f, .0f, .0f, 1.0f));
-			for (final PolygonVertex polygon : monotonePolygons) {
-				drawVertices(polygon, graphics);
-			}
+			renderVertices(graphics);
+		}
+	}
+
+	private void renderTriangles(final Graphics2D graphics) {
+		graphics.setStroke(new BasicStroke(4.0f));
+		graphics.setColor(new Color(.0f, 0.8f, 0.0f, 1.0f));
+		for (final PolygonTriangle triangle : triangleGraphs) {
+			drawEdges(triangle, graphics);
+		}
+	}
+
+	private void renderMonotonePieces(final Graphics2D graphics) {
+		graphics.setStroke(new BasicStroke(3.0f));
+		graphics.setColor(new Color(0.8f, .0f, .0f, 1.0f));
+		for (final PolygonVertex polygon : monotonePolygons) {
+			drawEdges(polygon, graphics);
+		}
+	}
+
+	private void renderOriginalPolygon(final Graphics2D graphics) {
+		graphics.setStroke(new BasicStroke(2.0f));
+		graphics.setColor(new Color(.0f, .0f, 1.0f, 1.0f));
+		for (final PolygonVertex polygon : originalPolygons) {
+			drawEdges(polygon, graphics);
+		}
+	}
+
+	private void renderVertices(final Graphics2D graphics) {
+		graphics.setColor(new Color(.0f, .0f, .0f, 1.0f));
+		for (final PolygonVertex polygon : monotonePolygons) {
+			drawVertices(polygon, graphics);
 		}
 	}
 
@@ -225,6 +242,8 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		} else if (e.getKeyChar() == '3') {
 			renderTriangles = !renderTriangles;
 		} else if (e.getKeyChar() == '4') {
+			renderTriangleGraph = !renderTriangleGraph;
+		} else if (e.getKeyChar() == '5') {
 			renderVertices = !renderVertices;
 		}
 		repaint();
