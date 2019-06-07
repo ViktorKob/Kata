@@ -7,7 +7,6 @@ import java.util.EnumMap;
 import java.util.Map;
 
 public class AbstractFactory {
-
 	private final Map<ComponentType, ComponentBuilder> products;
 
 	public AbstractFactory() {

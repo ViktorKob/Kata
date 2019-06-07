@@ -20,10 +20,12 @@ import static net.thomas.kata.geometry.algorithms.VertexType.START;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 import java.util.function.Function;
 
@@ -171,7 +173,7 @@ public class PolygonUtilImpl implements PolygonUtil {
 		private void handleMergeVertex(PolygonVertex vertex) {
 			final Edge edgeBeforeVertex = edges.get(vertex.getBefore());
 			if (vertexTypes.get(edgeBeforeVertex.getHelper()) == MERGE) {
-				monotonePolygons.add(cutOutMonotonePiece(vertex, edgeBeforeVertex.getHelper()));
+				monotonePolygons.add(cutOutMonotonePiece(edgeBeforeVertex.getHelper(), vertex));
 			}
 			status.deleteEdge(edgeBeforeVertex);
 			final Edge edgeLeftOfVertex = status.locateNearestEdgeToTheLeft(vertex);
@@ -247,7 +249,6 @@ public class PolygonUtilImpl implements PolygonUtil {
 		}
 
 		private PolygonTriangle buildTriangleGraph(PolygonVertex monotonePolygon) {
-			System.out.println(monotonePolygon.allToString());
 			final TriangleGraphBuilder builder = new TriangleGraphBuilder();
 			final Iterator<PolygonVertex> sweepline = new SweeplineBuilder().addPolygon(monotonePolygon).build().iterator();
 			final Stack<PolygonVertex> unprocessedVertices = new Stack<>();
@@ -274,8 +275,7 @@ public class PolygonUtilImpl implements PolygonUtil {
 					} else {
 						PolygonVertex lastVertex = unprocessedVertices.pop();
 						while (!unprocessedVertices.isEmpty() && edgeIsInsidePolygon(currentSide, next, unprocessedVertices.peek(), lastVertex)) {
-							// Add triangle
-							System.out.println("Triangle! " + lastVertex);
+							builder.add(buildTriangle(nextSide, next, lastVertex, unprocessedVertices.peek()));
 							lastVertex = unprocessedVertices.pop();
 						}
 						unprocessedVertices.push(lastVertex);
@@ -296,22 +296,30 @@ public class PolygonUtilImpl implements PolygonUtil {
 		}
 
 		class TriangleGraphBuilder {
-			private final Stack<PolygonTriangle> triangles;
+			private final Set<PolygonTriangle> looseTriangles;
 
 			public TriangleGraphBuilder() {
-				triangles = new Stack<>();
+				looseTriangles = new HashSet<>();
 			}
 
 			public TriangleGraphBuilder add(PolygonTriangle triangle) {
-				while (!triangles.isEmpty() && triangle.isNeighbourTo(triangles.peek())) {
-					triangle.connect(triangles.pop());
+				final Set<PolygonTriangle> absorbedTriangles = new HashSet<>();
+				for (final PolygonTriangle looseTriangle : looseTriangles) {
+					if (looseTriangle.isNeighbourTo(triangle)) {
+						looseTriangle.connect(triangle);
+						absorbedTriangles.add(looseTriangle);
+					}
 				}
-				triangles.push(triangle);
+				looseTriangles.removeAll(absorbedTriangles);
+				looseTriangles.add(triangle);
 				return this;
 			}
 
 			public PolygonTriangle build() {
-				return triangles.pop();
+				if (looseTriangles.size() > 1) {
+					throw new RuntimeException("Number of loose triangles was " + looseTriangles.size() + ". It should have been 1. " + looseTriangles);
+				}
+				return looseTriangles.iterator().next();
 			}
 		}
 

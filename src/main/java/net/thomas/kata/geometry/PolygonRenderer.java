@@ -74,11 +74,9 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 
 	public static void main(String[] args) {
 		final PolygonUtil util = new PolygonUtilImpl();
-		final Collection<PolygonVertex> polygons = combineSimplePolygons(
-				SIMPLE_CLEAN_SAMPLE/*
-									 * , COLINEAR_SAMPLE, SIMPLE_SAMPLE_WITH_CUTS, MERGE_CASES, BOOK_EXAMPLE_POLYGON
-									 */);
-		// polygons = appendHoles(polygons, SIMPLE_CLEAN_SAMPLE_HOLE, COLINEAR_SAMPLE_HOLE);
+		Collection<PolygonVertex> polygons = combineSimplePolygons(SIMPLE_CLEAN_SAMPLE, COLINEAR_SAMPLE, SIMPLE_SAMPLE_WITH_CUTS, MERGE_CASES,
+				BOOK_EXAMPLE_POLYGON);
+		polygons = appendHoles(polygons, SIMPLE_CLEAN_SAMPLE_HOLE, COLINEAR_SAMPLE_HOLE);
 		final Collection<PolygonVertex> monotonePolygons = util.getMonotoneParts(polygons);
 		final Collection<PolygonTriangle> triangleGraphs = util.triangulateMonotonePolygons(monotonePolygons);
 		final PolygonRenderer renderer = new PolygonRenderer(polygons, monotonePolygons, triangleGraphs);
@@ -128,14 +126,14 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		graphics.clearRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 		graphics.setComposite(AlphaComposite.getInstance(SRC_OVER));
 		if (renderTriangles) {
-			graphics.setStroke(new BasicStroke(10.0f));
+			graphics.setStroke(new BasicStroke(4.0f));
 			graphics.setColor(new Color(.0f, 0.8f, 0.0f, 1.0f));
 			for (final PolygonTriangle triangle : triangleGraphs) {
 				drawEdges(triangle, graphics);
 			}
 		}
 		if (renderMonotones) {
-			graphics.setStroke(new BasicStroke(5.0f));
+			graphics.setStroke(new BasicStroke(3.0f));
 			graphics.setColor(new Color(0.8f, .0f, .0f, 1.0f));
 			for (final PolygonVertex polygon : monotonePolygons) {
 				drawEdges(polygon, graphics);
