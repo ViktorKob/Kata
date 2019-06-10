@@ -74,7 +74,7 @@ public class PolygonUtilImplUnitTest {
 		final PolygonVertex vertex9 = new PolygonVertex(0, 4);
 		final PolygonVertex polygon = builder.add(vertex1, vertex2, vertex3, vertex4, vertex5, vertex6, vertex7, vertex8, vertex9).build();
 		final Iterator<PolygonVertex> monotoneParts = util.getMonotoneParts(asList(polygon)).iterator();
-		assertEquals(vertex6, monotoneParts.next());
+		assertEquals(vertex4, monotoneParts.next());
 		assertEquals(vertex6, monotoneParts.next());
 		assertEquals(vertex6, monotoneParts.next());
 		assertEquals(vertex2, monotoneParts.next());
