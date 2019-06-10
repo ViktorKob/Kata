@@ -1,6 +1,7 @@
 package net.thomas.kata.data_structures.tree;
 
 import static java.util.Collections.emptyList;
+import static net.thomas.kata.data_structures.tree.BinarySearchTree.TraversalMethod.IN_ORDER;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -42,23 +43,52 @@ public class BinarySearchTree<TYPE extends Comparable<TYPE>> {
 	}
 
 	public List<TYPE> getContents() {
-		return getContents(root);
+		return getContents(IN_ORDER);
 	}
 
-	private List<TYPE> getContents(BinaryTreeNode<TYPE> currentNode) {
-		if (currentNode == null) {
-			return emptyList();
-		} else {
-			final List<TYPE> contents = new LinkedList<>();
-			contents.addAll(getContents(currentNode.getLeft()));
-			contents.add(currentNode.getContents());
-			contents.addAll(getContents(currentNode.getRight()));
-			return contents;
+	public List<TYPE> getContents(TraversalMethod method) {
+		switch (method) {
+			case IN_ORDER:
+				return new InOrderTraversal().extractValues(root);
+
+			default:
+				throw new RuntimeException("Traversal Method not yet implemented: " + method);
 		}
 	}
 
 	public boolean isEmpty() {
 		return root == null;
+	}
+
+	public static enum TraversalMethod {
+		PRE_ORDER,
+		IN_ORDER,
+		OUT_ORDER,
+		POST_ORDER,
+		BREADTH_FIRST
+	}
+
+	abstract class ValueExtractor {
+		public final List<TYPE> extractValues(BinaryTreeNode<TYPE> node) {
+			if (node == null) {
+				return emptyList();
+			} else {
+				return _extractValues(node);
+			}
+		}
+
+		protected abstract List<TYPE> _extractValues(BinaryTreeNode<TYPE> node);
+	}
+
+	class InOrderTraversal extends ValueExtractor {
+		@Override
+		public List<TYPE> _extractValues(BinaryTreeNode<TYPE> node) {
+			final List<TYPE> contents = new LinkedList<>();
+			contents.addAll(extractValues(node.getLeft()));
+			contents.add(node.getContents());
+			contents.addAll(extractValues(node.getRight()));
+			return contents;
+		}
 	}
 }
 
