@@ -1,5 +1,9 @@
 package net.thomas.kata.data_structures.tree;
 
+import static net.thomas.kata.data_structures.tree.BinarySearchTree.TraversalMethod.IN_ORDER;
+import static net.thomas.kata.data_structures.tree.BinarySearchTree.TraversalMethod.OUT_ORDER;
+import static net.thomas.kata.data_structures.tree.BinarySearchTree.TraversalMethod.POST_ORDER;
+import static net.thomas.kata.data_structures.tree.BinarySearchTree.TraversalMethod.PRE_ORDER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -39,9 +43,36 @@ public class BinarySearchTreeUnitTest {
 	@Test
 	public void shouldContainValuesInOrderWhenNotOrdered() {
 		tree.insert(3).insert(1).insert(2);
-		final List<Integer> contents = tree.getContents();
+		final List<Integer> contents = tree.getContents(IN_ORDER);
 		assertEquals(1, (int) contents.get(0));
 		assertEquals(2, (int) contents.get(1));
 		assertEquals(3, (int) contents.get(2));
+	}
+
+	@Test
+	public void shouldContainValuesPreOrder() {
+		tree.insert(2).insert(1).insert(3);
+		final List<Integer> contents = tree.getContents(PRE_ORDER);
+		assertEquals(2, (int) contents.get(0));
+		assertEquals(1, (int) contents.get(1));
+		assertEquals(3, (int) contents.get(2));
+	}
+
+	@Test
+	public void shouldContainValuesOutOrder() {
+		tree.insert(2).insert(1).insert(3);
+		final List<Integer> contents = tree.getContents(OUT_ORDER);
+		assertEquals(3, (int) contents.get(0));
+		assertEquals(2, (int) contents.get(1));
+		assertEquals(1, (int) contents.get(2));
+	}
+
+	@Test
+	public void shouldContainValuesPostOrder() {
+		tree.insert(2).insert(1).insert(3);
+		final List<Integer> contents = tree.getContents(POST_ORDER);
+		assertEquals(1, (int) contents.get(0));
+		assertEquals(3, (int) contents.get(1));
+		assertEquals(2, (int) contents.get(2));
 	}
 }
