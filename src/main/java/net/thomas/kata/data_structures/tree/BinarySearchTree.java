@@ -1,5 +1,7 @@
 package net.thomas.kata.data_structures.tree;
 
+import static java.util.Collections.singletonList;
+import static net.thomas.kata.data_structures.tree.BinarySearchTree.TraversalMethod.BREADTH_FIRST;
 import static net.thomas.kata.data_structures.tree.BinarySearchTree.TraversalMethod.IN_ORDER;
 import static net.thomas.kata.data_structures.tree.BinarySearchTree.TraversalMethod.OUT_ORDER;
 import static net.thomas.kata.data_structures.tree.BinarySearchTree.TraversalMethod.POST_ORDER;
@@ -22,8 +24,9 @@ public class BinarySearchTree<TYPE extends Comparable<TYPE>> {
 		traversalMethods = new EnumMap<>(TraversalMethod.class);
 		traversalMethods.put(PRE_ORDER, new PreOrderExtractor());
 		traversalMethods.put(IN_ORDER, new InOrderExtractor());
-		traversalMethods.put(POST_ORDER, new PostOrderExtractor());
 		traversalMethods.put(OUT_ORDER, new OutOrderExtractor());
+		traversalMethods.put(POST_ORDER, new PostOrderExtractor());
+		traversalMethods.put(BREADTH_FIRST, new BreathFirstExtractor());
 	}
 
 	public BinarySearchTree<TYPE> insert(TYPE value) {
@@ -76,8 +79,7 @@ public class BinarySearchTree<TYPE extends Comparable<TYPE>> {
 		BREADTH_FIRST
 	}
 
-	abstract class ValueExtractor {
-
+	private abstract class ValueExtractor {
 		public final List<TYPE> extractValues(BinaryTreeNode<TYPE> node) {
 			final List<TYPE> contents = new LinkedList<>();
 			if (node != null) {
@@ -89,7 +91,7 @@ public class BinarySearchTree<TYPE extends Comparable<TYPE>> {
 		protected abstract void _extractValues(BinaryTreeNode<TYPE> node, List<TYPE> contents);
 	}
 
-	class PreOrderExtractor extends ValueExtractor {
+	private class PreOrderExtractor extends ValueExtractor {
 		@Override
 		public void _extractValues(BinaryTreeNode<TYPE> node, List<TYPE> contents) {
 			contents.add(node.getContents());
@@ -98,7 +100,7 @@ public class BinarySearchTree<TYPE extends Comparable<TYPE>> {
 		}
 	}
 
-	class InOrderExtractor extends ValueExtractor {
+	private class InOrderExtractor extends ValueExtractor {
 		@Override
 		public void _extractValues(BinaryTreeNode<TYPE> node, List<TYPE> contents) {
 			contents.addAll(extractValues(node.getLeft()));
@@ -107,7 +109,7 @@ public class BinarySearchTree<TYPE extends Comparable<TYPE>> {
 		}
 	}
 
-	class OutOrderExtractor extends ValueExtractor {
+	private class OutOrderExtractor extends ValueExtractor {
 		@Override
 		public void _extractValues(BinaryTreeNode<TYPE> node, List<TYPE> contents) {
 			contents.addAll(extractValues(node.getRight()));
@@ -116,12 +118,34 @@ public class BinarySearchTree<TYPE extends Comparable<TYPE>> {
 		}
 	}
 
-	class PostOrderExtractor extends ValueExtractor {
+	private class PostOrderExtractor extends ValueExtractor {
 		@Override
 		public void _extractValues(BinaryTreeNode<TYPE> node, List<TYPE> contents) {
 			contents.addAll(extractValues(node.getLeft()));
 			contents.addAll(extractValues(node.getRight()));
 			contents.add(node.getContents());
+		}
+	}
+
+	private class BreathFirstExtractor extends ValueExtractor {
+		@Override
+		public void _extractValues(BinaryTreeNode<TYPE> rootNode, List<TYPE> contents) {
+			List<BinaryTreeNode<TYPE>> nodesOnCurrentLevel = singletonList(rootNode);
+			while (!nodesOnCurrentLevel.isEmpty()) {
+				nodesOnCurrentLevel = collectContentsAndExtractNextLevel(contents, nodesOnCurrentLevel);
+			}
+		}
+
+		private List<BinaryTreeNode<TYPE>> collectContentsAndExtractNextLevel(List<TYPE> contents, List<BinaryTreeNode<TYPE>> nodesOnCurrentLevel) {
+			final List<BinaryTreeNode<TYPE>> nodesOnNextLevel = new LinkedList<>();
+			for (final BinaryTreeNode<TYPE> node : nodesOnCurrentLevel) {
+				if (node != null) {
+					nodesOnNextLevel.add(node.getLeft());
+					nodesOnNextLevel.add(node.getRight());
+					contents.add(node.getContents());
+				}
+			}
+			return nodesOnNextLevel;
 		}
 	}
 }

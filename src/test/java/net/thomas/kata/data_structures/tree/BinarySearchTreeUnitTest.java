@@ -1,5 +1,6 @@
 package net.thomas.kata.data_structures.tree;
 
+import static net.thomas.kata.data_structures.tree.BinarySearchTree.TraversalMethod.BREADTH_FIRST;
 import static net.thomas.kata.data_structures.tree.BinarySearchTree.TraversalMethod.IN_ORDER;
 import static net.thomas.kata.data_structures.tree.BinarySearchTree.TraversalMethod.OUT_ORDER;
 import static net.thomas.kata.data_structures.tree.BinarySearchTree.TraversalMethod.POST_ORDER;
@@ -74,5 +75,14 @@ public class BinarySearchTreeUnitTest {
 		assertEquals(1, (int) contents.get(0));
 		assertEquals(3, (int) contents.get(1));
 		assertEquals(2, (int) contents.get(2));
+	}
+
+	@Test
+	public void shouldContainValuesBreathFirst() {
+		tree.insert(2).insert(1).insert(3);
+		final List<Integer> contents = tree.getContents(BREADTH_FIRST);
+		assertEquals(2, (int) contents.get(0));
+		assertEquals(1, (int) contents.get(1));
+		assertEquals(3, (int) contents.get(2));
 	}
 }
