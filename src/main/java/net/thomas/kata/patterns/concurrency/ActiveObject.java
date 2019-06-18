@@ -16,13 +16,15 @@ public class ActiveObject {
 
 	private final Queue<Runnable> pendingTransactions;
 	private final ExecutorService executor;
+	private boolean running;
 
 	public ActiveObject() {
 		balanceInCents = 0;
 		pendingTransactions = new LinkedBlockingQueue<>();
 		executor = newSingleThreadExecutor();
 		executor.execute(() -> {
-			while (true) {
+			running = true;
+			while (running) {
 				if (!pendingTransactions.isEmpty()) {
 					pendingTransactions.poll().run();
 				}
@@ -51,6 +53,7 @@ public class ActiveObject {
 	}
 
 	public void closeAccount() {
+		running = false;
 		executor.shutdown();
 	}
 
@@ -58,7 +61,8 @@ public class ActiveObject {
 		final ActiveObject account = new ActiveObject();
 		account.deposit(new CurrencyAmount(100, 32));
 		account.withdraw(new CurrencyAmount(23, 15));
-		System.out.println(account.checkBalance().get());
+		System.out.println("Hello, Balance: " + account.checkBalance().get() + "!");
+		account.closeAccount();
 	}
 }
 
