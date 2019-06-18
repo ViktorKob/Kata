@@ -24,17 +24,24 @@ public class SimpleBusMessagingPattern {
 			running = true;
 			while (!pendingMessages.isEmpty() || running) {
 				if (!pendingMessages.isEmpty()) {
-					final Message message = pendingMessages.poll();
-					for (final Subscriber subscriber : subscribers) {
-						subscriber.receive(message);
-					}
+					publishToSubscribers(pendingMessages.poll());
 				}
-				try {
-					Thread.sleep(10);
-				} catch (final InterruptedException e) {
-				}
+				sleep();
 			}
 		});
+	}
+
+	private void publishToSubscribers(final Message message) {
+		for (final Subscriber subscriber : subscribers) {
+			subscriber.receive(message);
+		}
+	}
+
+	private void sleep() {
+		try {
+			Thread.sleep(10);
+		} catch (final InterruptedException e) {
+		}
 	}
 
 	public synchronized void subscribe(Subscriber subscriber) {
