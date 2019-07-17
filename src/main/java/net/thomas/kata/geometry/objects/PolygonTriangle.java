@@ -1,5 +1,6 @@
 package net.thomas.kata.geometry.objects;
 
+import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide.matching;
 import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.VERTEX_1;
 import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.VERTEX_2;
 import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.VERTEX_3;
@@ -19,6 +20,16 @@ public class PolygonTriangle {
 		VERTEX_3
 	}
 
+	public static enum TriangleSide {
+		SIDE_1, // VERTEX_1 -> VERTEX_2
+		SIDE_2, // VERTEX_2 -> VERTEX_3
+		SIDE_3; // VERTEX_3 -> VERTEX_1
+
+		public static TriangleSide matching(TriangleVertex vertexId) {
+			return TriangleSide.values()[vertexId.ordinal()];
+		}
+	}
+
 	private final PolygonVertex[] vertices;
 	private final PolygonTriangle[] neighbours;
 
@@ -34,16 +45,16 @@ public class PolygonTriangle {
 		vertices[vertexId.ordinal()] = instance;
 	}
 
-	public void setNeighbour(TriangleVertex vertexId, PolygonTriangle instance) {
-		neighbours[vertexId.ordinal()] = instance;
+	public void setNeighbour(TriangleSide sideId, PolygonTriangle instance) {
+		neighbours[sideId.ordinal()] = instance;
 	}
 
 	public PolygonVertex getVertex(TriangleVertex vertexId) {
 		return vertices[vertexId.ordinal()];
 	}
 
-	public PolygonTriangle getNeighbour(TriangleVertex vertexId) {
-		return neighbours[vertexId.ordinal()];
+	public PolygonTriangle getNeighbour(TriangleSide sideId) {
+		return neighbours[sideId.ordinal()];
 	}
 
 	public boolean isNeighbourTo(PolygonTriangle candidate) {
@@ -82,8 +93,8 @@ public class PolygonTriangle {
 				rightVertex = getIdForNextVertex(vertexId);
 			}
 		}
-		setNeighbour(leftVertex, neighbour);
-		neighbour.setNeighbour(rightVertex, this);
+		setNeighbour(matching(leftVertex), neighbour);
+		neighbour.setNeighbour(matching(rightVertex), this);
 	}
 
 	private TriangleVertex getIdForNextVertex(final TriangleVertex vertexId) {
@@ -118,7 +129,8 @@ public class PolygonTriangle {
 
 	@Override
 	public String toString() {
-		return getVertex(VERTEX_1) + ", " + getVertex(VERTEX_2) + ", " + getVertex(VERTEX_3) + " with neighbours VERTEX_1: " + (getNeighbour(VERTEX_1) != null)
-				+ ", VERTEX_2: " + (getNeighbour(VERTEX_2) != null) + ", VERTEX_3: " + (getNeighbour(VERTEX_3) != null);
+		return getVertex(VERTEX_1) + ", " + getVertex(VERTEX_2) + ", " + getVertex(VERTEX_3) + " with neighbours VERTEX_1: "
+				+ (getNeighbour(matching(VERTEX_1)) != null) + ", VERTEX_2: " + (getNeighbour(matching(VERTEX_2)) != null) + ", VERTEX_3: "
+				+ (getNeighbour(matching(VERTEX_3)) != null);
 	}
 }

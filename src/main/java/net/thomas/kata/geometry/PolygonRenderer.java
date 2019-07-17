@@ -2,6 +2,7 @@ package net.thomas.kata.geometry;
 
 import static java.awt.AlphaComposite.SRC_OVER;
 import static java.util.Arrays.asList;
+import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide.matching;
 import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.VERTEX_1;
 import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.VERTEX_2;
 import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.VERTEX_3;
@@ -13,6 +14,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.geom.Point2D;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -23,7 +25,9 @@ import javax.swing.JFrame;
 
 import net.thomas.kata.geometry.algorithms.PolygonUtilImpl;
 import net.thomas.kata.geometry.objects.PolygonBuilder;
+import net.thomas.kata.geometry.objects.PolygonGraphNode;
 import net.thomas.kata.geometry.objects.PolygonTriangle;
+import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide;
 import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex;
 import net.thomas.kata.geometry.objects.PolygonVertex;
 
@@ -66,7 +70,9 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 
 	private final Collection<PolygonVertex> monotonePolygons;
 	private final Collection<PolygonVertex> originalPolygons;
-	private final Collection<PolygonTriangle> triangleGraphs;
+	private final Collection<PolygonTriangle> intermediateTriangleGraphs;
+	private final Collection<PolygonGraphNode> triangleGraphs;
+
 	private boolean renderOriginal;
 	private boolean renderMonotones;
 	private boolean renderTriangles;
@@ -79,8 +85,12 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 				BOOK_EXAMPLE_POLYGON);
 		polygons = appendHoles(polygons, SIMPLE_CLEAN_SAMPLE_HOLE, COLINEAR_SAMPLE_HOLE);
 		final Collection<PolygonVertex> monotonePolygons = util.getMonotoneParts(polygons);
-		final Collection<PolygonTriangle> triangleGraphs = util.triangulateMonotonePolygons(monotonePolygons);
-		final PolygonRenderer renderer = new PolygonRenderer(polygons, monotonePolygons, triangleGraphs);
+		final Collection<PolygonTriangle> intermediateTriangleGraphs = util.triangulateMonotonePolygons(monotonePolygons);
+		final Collection<PolygonGraphNode> triangleGraphs = util.finalizeTriangleGraphs(intermediateTriangleGraphs);
+		for (final PolygonGraphNode polygonGraphNode : triangleGraphs) {
+			System.out.println(polygonGraphNode);
+		}
+		final PolygonRenderer renderer = new PolygonRenderer(polygons, monotonePolygons, intermediateTriangleGraphs, triangleGraphs);
 		renderer.setVisible(true);
 	}
 
@@ -110,9 +120,11 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		return mergedPolygons;
 	}
 
-	public PolygonRenderer(Collection<PolygonVertex> originalPolygons, Collection<PolygonVertex> monotonePolygons, Collection<PolygonTriangle> triangleGraphs) {
+	public PolygonRenderer(Collection<PolygonVertex> originalPolygons, Collection<PolygonVertex> monotonePolygons,
+			Collection<PolygonTriangle> intermediateTriangleGraphs, Collection<PolygonGraphNode> triangleGraphs) {
 		this.originalPolygons = originalPolygons;
 		this.monotonePolygons = monotonePolygons;
+		this.intermediateTriangleGraphs = intermediateTriangleGraphs;
 		this.triangleGraphs = triangleGraphs;
 		setLocation(500, 400);
 		setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -135,6 +147,9 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		if (renderOriginal) {
 			renderOriginalPolygon(graphics);
 		}
+		if (renderTriangleGraph) {
+			renderTriangleGraphs(graphics);
+		}
 		if (renderVertices) {
 			renderVertices(graphics);
 		}
@@ -143,7 +158,7 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 	private void renderTriangles(final Graphics2D graphics) {
 		graphics.setStroke(new BasicStroke(4.0f));
 		graphics.setColor(new Color(.0f, 0.8f, 0.0f, 1.0f));
-		for (final PolygonTriangle triangle : triangleGraphs) {
+		for (final PolygonTriangle triangle : intermediateTriangleGraphs) {
 			drawEdges(triangle, graphics);
 		}
 	}
@@ -162,6 +177,32 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		for (final PolygonVertex polygon : originalPolygons) {
 			drawEdges(polygon, graphics);
 		}
+	}
+
+	private void renderTriangleGraphs(Graphics2D graphics) {
+		graphics.setStroke(new BasicStroke(2.0f));
+		graphics.setColor(new Color(.8f, .8f, 0.8f, 1.0f));
+		final Set<PolygonGraphNode> visitedNodes = new HashSet<>();
+		for (final PolygonGraphNode node : triangleGraphs) {
+			renderNode(graphics, visitedNodes, node);
+		}
+	}
+
+	private void renderNode(Graphics2D graphics, final Set<PolygonGraphNode> visitedNodes, final PolygonGraphNode node) {
+		if (node != null && !visitedNodes.contains(node)) {
+			visitedNodes.add(node);
+			drawCenter(node, graphics);
+			for (final TriangleSide side : TriangleSide.values()) {
+				renderNode(graphics, visitedNodes, node.getNeighbour(side));
+			}
+		}
+	}
+
+	private void drawCenter(PolygonGraphNode node, Graphics2D graphics) {
+		final Point2D center = node.getCenter();
+		System.out.println(center);
+		graphics.fillOval(translateXIntoFramespace(center.getX()) - POINT_DIAMETER / 2, translateYIntoFramespace(center.getY()) - POINT_DIAMETER / 2,
+				POINT_DIAMETER, POINT_DIAMETER);
 	}
 
 	private void renderVertices(final Graphics2D graphics) {
@@ -205,7 +246,7 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		drawEdge(triangle.getVertex(VERTEX_3), triangle.getVertex(VERTEX_1), graphics);
 		drawnTriangles.add(triangle);
 		for (final TriangleVertex vertexId : TriangleVertex.values()) {
-			final PolygonTriangle neighbour = triangle.getNeighbour(vertexId);
+			final PolygonTriangle neighbour = triangle.getNeighbour(matching(vertexId));
 			if (neighbour != null && !drawnTriangles.contains(neighbour)) {
 				drawEdges(neighbour, graphics, drawnTriangles);
 			}

@@ -16,6 +16,9 @@ import static net.thomas.kata.geometry.algorithms.VertexType.MERGE;
 import static net.thomas.kata.geometry.algorithms.VertexType.REGULAR;
 import static net.thomas.kata.geometry.algorithms.VertexType.SPLIT;
 import static net.thomas.kata.geometry.algorithms.VertexType.START;
+import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide.SIDE_1;
+import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide.SIDE_2;
+import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide.SIDE_3;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,7 +33,9 @@ import java.util.Stack;
 import java.util.function.Function;
 
 import net.thomas.kata.geometry.PolygonUtil;
+import net.thomas.kata.geometry.objects.PolygonGraphNode;
 import net.thomas.kata.geometry.objects.PolygonTriangle;
+import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide;
 import net.thomas.kata.geometry.objects.PolygonVertex;
 
 public class PolygonUtilImpl implements PolygonUtil {
@@ -44,6 +49,11 @@ public class PolygonUtilImpl implements PolygonUtil {
 	@Override
 	public Collection<PolygonTriangle> triangulateMonotonePolygons(Collection<PolygonVertex> monotonePolygons) {
 		return new MonotonePolygonTriangulator(monotonePolygons).buildTriangleGraphs();
+	}
+
+	@Override
+	public Collection<PolygonGraphNode> finalizeTriangleGraphs(Collection<PolygonTriangle> intermediateTriangleGraphs) {
+		return new TriangleGraphConverter(intermediateTriangleGraphs).buildFinalGraphs();
 	}
 
 	/***
@@ -394,6 +404,104 @@ public class PolygonUtilImpl implements PolygonUtil {
 
 			public PolygonVertex getBottom() {
 				return bottom;
+			}
+		}
+	}
+
+	static class TriangleGraphConverter {
+		private final Collection<PolygonTriangle> intermediateTriangleGraphs;
+
+		public TriangleGraphConverter(Collection<PolygonTriangle> intermediateTriangleGraphs) {
+			this.intermediateTriangleGraphs = intermediateTriangleGraphs;
+		}
+
+		public Collection<PolygonGraphNode> buildFinalGraphs() {
+			final HashSet<PolygonTriangle> pendingNodes = extractAllUniqueTriangles();
+			return convertToFinalGraphs(pendingNodes);
+		}
+
+		private HashSet<PolygonTriangle> extractAllUniqueTriangles() {
+			final HashSet<PolygonTriangle> pendingNodes = new HashSet<>();
+			for (final PolygonTriangle triangle : intermediateTriangleGraphs) {
+				pendingNodes.add(triangle);
+				addNeighbours(pendingNodes, triangle);
+
+			}
+			return pendingNodes;
+		}
+
+		private void addNeighbours(HashSet<PolygonTriangle> nodes, PolygonTriangle currentTriangle) {
+			addNeighbourIfNotPresent(nodes, currentTriangle, SIDE_1);
+			addNeighbourIfNotPresent(nodes, currentTriangle, SIDE_2);
+			addNeighbourIfNotPresent(nodes, currentTriangle, SIDE_3);
+		}
+
+		private void addNeighbourIfNotPresent(HashSet<PolygonTriangle> nodes, PolygonTriangle currentTriangle, TriangleSide side) {
+			final PolygonTriangle neighbour = currentTriangle.getNeighbour(side);
+			if (neighbour != null && !nodes.contains(neighbour)) {
+				nodes.add(neighbour);
+				addNeighbours(nodes, neighbour);
+			}
+		}
+
+		private Collection<PolygonGraphNode> convertToFinalGraphs(final HashSet<PolygonTriangle> pendingNodes) {
+			final Map<PolygonTriangle, PolygonGraphNode> finalGraphs = new HashMap<>();
+			for (final PolygonTriangle triangle : pendingNodes) {
+				if (!finalGraphs.containsKey(triangle)) {
+					convertNodeWithNeighbours(triangle, finalGraphs);
+				}
+			}
+			return extractDistinctGraphs(finalGraphs);
+		}
+
+		private void convertNodeWithNeighbours(PolygonTriangle triangle, Map<PolygonTriangle, PolygonGraphNode> finalGraph) {
+			final PolygonGraphNode node = new PolygonGraphNode(triangle);
+			finalGraph.put(triangle, node);
+			for (final TriangleSide side : TriangleSide.values()) {
+				if (triangle.getNeighbour(side) != null) {
+					linkNodesIfNeighbourHasBeenConvertedAlready(triangle, finalGraph, node, side);
+				}
+			}
+		}
+
+		private void linkNodesIfNeighbourHasBeenConvertedAlready(PolygonTriangle triangle, Map<PolygonTriangle, PolygonGraphNode> finalGraph,
+				final PolygonGraphNode node, final TriangleSide side) {
+			final PolygonTriangle neighbourTriangle = triangle.getNeighbour(side);
+			if (finalGraph.containsKey(neighbourTriangle)) {
+				final PolygonGraphNode neighbourNode = finalGraph.get(neighbourTriangle);
+				node.setNeighbour(side, neighbourNode);
+				linkBackToNode(triangle, node, neighbourTriangle, neighbourNode);
+			}
+		}
+
+		private void linkBackToNode(PolygonTriangle triangle, final PolygonGraphNode node, final PolygonTriangle neighbourTriangle,
+				final PolygonGraphNode neighbourNode) {
+			for (final TriangleSide neighbourSide : TriangleSide.values()) {
+				if (neighbourTriangle.getNeighbour(neighbourSide) == triangle) {
+					neighbourNode.setNeighbour(neighbourSide, node);
+					break;
+				}
+			}
+		}
+
+		private Collection<PolygonGraphNode> extractDistinctGraphs(Map<PolygonTriangle, PolygonGraphNode> finalGraphs) {
+			final Collection<PolygonGraphNode> distinctGraphs = new HashSet<>();
+			final Set<PolygonGraphNode> visitedNodes = new HashSet<>();
+			for (final PolygonGraphNode node : finalGraphs.values()) {
+				if (!visitedNodes.contains(node)) {
+					distinctGraphs.add(node);
+				}
+				visitNode(node, visitedNodes);
+			}
+			return distinctGraphs;
+		}
+
+		private void visitNode(final PolygonGraphNode node, final Set<PolygonGraphNode> visitedNodes) {
+			if (node != null && !visitedNodes.contains(node)) {
+				visitedNodes.add(node);
+				visitNode(node.getNeighbour(SIDE_1), visitedNodes);
+				visitNode(node.getNeighbour(SIDE_2), visitedNodes);
+				visitNode(node.getNeighbour(SIDE_3), visitedNodes);
 			}
 		}
 	}
