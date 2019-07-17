@@ -87,9 +87,6 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		final Collection<PolygonVertex> monotonePolygons = util.getMonotoneParts(polygons);
 		final Collection<PolygonTriangle> intermediateTriangleGraphs = util.triangulateMonotonePolygons(monotonePolygons);
 		final Collection<PolygonGraphNode> triangleGraphs = util.finalizeTriangleGraphs(intermediateTriangleGraphs);
-		for (final PolygonGraphNode polygonGraphNode : triangleGraphs) {
-			System.out.println(polygonGraphNode);
-		}
 		final PolygonRenderer renderer = new PolygonRenderer(polygons, monotonePolygons, intermediateTriangleGraphs, triangleGraphs);
 		renderer.setVisible(true);
 	}
@@ -181,22 +178,24 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 
 	private void renderTriangleGraphs(Graphics2D graphics) {
 		graphics.setStroke(new BasicStroke(2.0f));
-		graphics.setColor(new Color(.6f, .6f, 0.6f, 1.0f));
 		final Set<PolygonGraphNode> visitedNodes = new HashSet<>();
 		for (final PolygonGraphNode node : triangleGraphs) {
-			renderNode(node, null, visitedNodes, graphics);
+			renderNode(node, visitedNodes, graphics);
 		}
 	}
 
-	private void renderNode(final PolygonGraphNode node, PolygonGraphNode origin, final Set<PolygonGraphNode> visitedNodes, Graphics2D graphics) {
-		if (node != null && !visitedNodes.contains(node)) {
+	private void renderNode(final PolygonGraphNode node, final Set<PolygonGraphNode> visitedNodes, Graphics2D graphics) {
+		if (!visitedNodes.contains(node)) {
 			visitedNodes.add(node);
-			if (origin != null) {
-				drawConnection(origin, node, graphics);
-			}
+			graphics.setColor(new Color(.6f, .6f, 0.6f, 1.0f));
 			drawCenter(node, graphics);
 			for (final TriangleSide side : TriangleSide.values()) {
-				renderNode(node.getNeighbour(side), node, visitedNodes, graphics);
+				final PolygonGraphNode neighbour = node.getNeighbour(side);
+				if (neighbour != null) {
+					renderNode(neighbour, visitedNodes, graphics);
+					graphics.setColor(new Color(.3f, .3f, 0.3f, 1.0f));
+					drawConnection(node, neighbour, graphics);
+				}
 			}
 		}
 	}
@@ -210,7 +209,6 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 
 	private void drawCenter(PolygonGraphNode node, Graphics2D graphics) {
 		final Point2D center = node.getCenter();
-		System.out.println(center);
 		graphics.fillOval(translateXIntoFramespace(center.getX()) - POINT_DIAMETER / 2, translateYIntoFramespace(center.getY()) - POINT_DIAMETER / 2,
 				POINT_DIAMETER, POINT_DIAMETER);
 	}
@@ -296,6 +294,8 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 			renderTriangleGraph = !renderTriangleGraph;
 		} else if (e.getKeyChar() == '5') {
 			renderVertices = !renderVertices;
+		} else if (e.getKeyChar() == KeyEvent.VK_ESCAPE) {
+			System.exit(0);
 		}
 		repaint();
 	}

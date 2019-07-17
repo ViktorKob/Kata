@@ -138,7 +138,7 @@ public class PolygonVertexUnitTest {
 		final PolygonVertex vertex4 = new PolygonVertex(0, 1);
 		final PolygonVertex polygonVertex1 = builder.add(vertex1, vertex2, vertex3, vertex4).build();
 		final PolygonVertex clonedVertex = polygonVertex1.cutIntoTwoPolygons(vertex3);
-		assertSame(vertex1, clonedVertex.getTwin());
+		assertSame(vertex1, clonedVertex.getTwins().get(0));
 	}
 
 	@Test
@@ -149,6 +149,6 @@ public class PolygonVertexUnitTest {
 		final PolygonVertex vertex4 = new PolygonVertex(0, 1);
 		final PolygonVertex polygonVertex1 = builder.add(vertex1, vertex2, vertex3, vertex4).build();
 		final PolygonVertex clonedVertex = polygonVertex1.cutIntoTwoPolygons(vertex3);
-		assertSame(vertex3, clonedVertex.getBefore().getTwin());
+		assertSame(vertex3, clonedVertex.getBefore().getTwins().get(0));
 	}
 }

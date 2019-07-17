@@ -2,6 +2,8 @@ package net.thomas.kata.geometry.objects;
 
 import java.awt.geom.Point2D;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 /***
  * Counterclockwise representation of a polygon. In clockwise order, it should be treated as a hole
@@ -12,20 +14,23 @@ public class PolygonVertex extends Point2D.Double implements Iterable<PolygonVer
 
 	private PolygonVertex before;
 	private PolygonVertex after;
-	private PolygonVertex twin;
+	private final List<PolygonVertex> twins;
 
 	public PolygonVertex(double x, double y) {
 		super(x, y);
 		before = this;
 		after = this;
+		twins = new LinkedList<>();
 	}
 
 	public PolygonVertex(PolygonVertex vertex) {
 		this(vertex.x, vertex.y);
-		before = this;
-		after = this;
-		twin = vertex;
-		vertex.twin = this;
+		twins.addAll(vertex.twins);
+	}
+
+	public void setTwin(PolygonVertex twin) {
+		twins.add(twin);
+		twin.twins.add(this);
 	}
 
 	public void insertAfter(PolygonVertex... vertices) {
@@ -57,8 +62,8 @@ public class PolygonVertex extends Point2D.Double implements Iterable<PolygonVer
 		return after;
 	}
 
-	public PolygonVertex getTwin() {
-		return twin;
+	public List<PolygonVertex> getTwins() {
+		return twins;
 	}
 
 	public PolygonVertex createClone() {
@@ -80,6 +85,8 @@ public class PolygonVertex extends Point2D.Double implements Iterable<PolygonVer
 		final PolygonVertex secondLastInNewPolygon = targetVertex.getBefore();
 		final PolygonVertex thisClone = new PolygonVertex(this);
 		final PolygonVertex targetClone = new PolygonVertex(targetVertex);
+		thisClone.setTwin(this);
+		targetClone.setTwin(targetVertex);
 		after = targetVertex;
 		targetVertex.before = this;
 		thisClone.after = nextInNewPolygon;

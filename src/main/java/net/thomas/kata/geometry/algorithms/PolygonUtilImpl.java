@@ -4,6 +4,7 @@ import static java.lang.Math.PI;
 import static java.lang.Math.abs;
 import static java.lang.Math.atan2;
 import static java.util.Collections.singletonMap;
+import static java.util.stream.Collectors.toSet;
 import static net.thomas.kata.geometry.algorithms.PolygonUtilImpl.EPSILON;
 import static net.thomas.kata.geometry.algorithms.VertexRelation.ABOVE;
 import static net.thomas.kata.geometry.algorithms.VertexRelation.BELOW;
@@ -36,6 +37,7 @@ import net.thomas.kata.geometry.PolygonUtil;
 import net.thomas.kata.geometry.objects.PolygonGraphNode;
 import net.thomas.kata.geometry.objects.PolygonTriangle;
 import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide;
+import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex;
 import net.thomas.kata.geometry.objects.PolygonVertex;
 
 public class PolygonUtilImpl implements PolygonUtil {
@@ -416,16 +418,81 @@ public class PolygonUtilImpl implements PolygonUtil {
 		}
 
 		public Collection<PolygonGraphNode> buildFinalGraphs() {
-			final HashSet<PolygonTriangle> pendingNodes = extractAllUniqueTriangles();
+			connectAllAdjacentTriangles(intermediateTriangleGraphs);
+			final HashSet<PolygonTriangle> pendingNodes = extractAllUniqueTriangles(intermediateTriangleGraphs);
 			return convertToFinalGraphs(pendingNodes);
 		}
 
-		private HashSet<PolygonTriangle> extractAllUniqueTriangles() {
+		private void connectAllAdjacentTriangles(Collection<PolygonTriangle> intermediateTriangleGraphs) {
+			final Map<PolygonVertex, Set<PolygonTriangle>> verticesWithTwins = new HashMap<>();
+			final Set<PolygonTriangle> visitedTriangles = new HashSet<>();
+			for (final PolygonTriangle triangle : intermediateTriangleGraphs) {
+				visitTriangle(triangle, visitedTriangles, verticesWithTwins);
+			}
+			for (final Set<PolygonTriangle> triangles : verticesWithTwins.values()) {
+				for (final PolygonTriangle triangle : triangles) {
+					connectAdjacentTriangles(verticesWithTwins, triangle);
+				}
+			}
+		}
+
+		private void connectAdjacentTriangles(final Map<PolygonVertex, Set<PolygonTriangle>> verticesWithTwins, final PolygonTriangle triangle) {
+			final Set<PolygonTriangle> neighbourCandidates = new HashSet<>();
+			for (final TriangleVertex vertexId : TriangleVertex.values()) {
+				final Set<PolygonTriangle> twinTriangles = verticesWithTwins.get(triangle.getVertex(vertexId));
+				if (twinTriangles != null) {
+					neighbourCandidates.addAll(twinTriangles.stream().filter((potentialCandidate) -> {
+						return isTrueCandidate(triangle, potentialCandidate);
+					}).collect(toSet()));
+				}
+			}
+			if (!neighbourCandidates.isEmpty()) {
+				for (final PolygonTriangle candidate : neighbourCandidates) {
+					candidate.connect(triangle);
+				}
+			}
+		}
+
+		private boolean isTrueCandidate(final PolygonTriangle triangle, PolygonTriangle candidate) {
+			return candidate != triangle && triangle.isNeighbourTo(candidate) && !triangle.isConnectedTo(candidate);
+		}
+
+		private void visitTriangle(final PolygonTriangle triangle, final Set<PolygonTriangle> visitedTriangles,
+				final Map<PolygonVertex, Set<PolygonTriangle>> verticesWithTwins) {
+			if (triangle != null) {
+				visitedTriangles.add(triangle);
+				checkForTwinVertices(triangle, verticesWithTwins);
+				visitSides(triangle, visitedTriangles, verticesWithTwins);
+			}
+		}
+
+		private void checkForTwinVertices(final PolygonTriangle triangle, final Map<PolygonVertex, Set<PolygonTriangle>> verticesWithTwins) {
+			for (final TriangleVertex vertexId : TriangleVertex.values()) {
+				final PolygonVertex vertex = triangle.getVertex(vertexId);
+				if (!vertex.getTwins().isEmpty()) {
+					if (!verticesWithTwins.containsKey(vertex)) {
+						verticesWithTwins.put(vertex, new HashSet<>());
+					}
+					verticesWithTwins.get(vertex).add(triangle);
+				}
+			}
+		}
+
+		private void visitSides(final PolygonTriangle triangle, final Set<PolygonTriangle> visitedTriangles,
+				final Map<PolygonVertex, Set<PolygonTriangle>> verticesWithTwins) {
+			for (final TriangleSide side : TriangleSide.values()) {
+				final PolygonTriangle neighbour = triangle.getNeighbour(side);
+				if (!visitedTriangles.contains(neighbour)) {
+					visitTriangle(neighbour, visitedTriangles, verticesWithTwins);
+				}
+			}
+		}
+
+		private HashSet<PolygonTriangle> extractAllUniqueTriangles(Collection<PolygonTriangle> intermediateTriangleGraphs) {
 			final HashSet<PolygonTriangle> pendingNodes = new HashSet<>();
 			for (final PolygonTriangle triangle : intermediateTriangleGraphs) {
 				pendingNodes.add(triangle);
 				addNeighbours(pendingNodes, triangle);
-
 			}
 			return pendingNodes;
 		}
