@@ -181,21 +181,31 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 
 	private void renderTriangleGraphs(Graphics2D graphics) {
 		graphics.setStroke(new BasicStroke(2.0f));
-		graphics.setColor(new Color(.8f, .8f, 0.8f, 1.0f));
+		graphics.setColor(new Color(.6f, .6f, 0.6f, 1.0f));
 		final Set<PolygonGraphNode> visitedNodes = new HashSet<>();
 		for (final PolygonGraphNode node : triangleGraphs) {
-			renderNode(graphics, visitedNodes, node);
+			renderNode(node, null, visitedNodes, graphics);
 		}
 	}
 
-	private void renderNode(Graphics2D graphics, final Set<PolygonGraphNode> visitedNodes, final PolygonGraphNode node) {
+	private void renderNode(final PolygonGraphNode node, PolygonGraphNode origin, final Set<PolygonGraphNode> visitedNodes, Graphics2D graphics) {
 		if (node != null && !visitedNodes.contains(node)) {
 			visitedNodes.add(node);
+			if (origin != null) {
+				drawConnection(origin, node, graphics);
+			}
 			drawCenter(node, graphics);
 			for (final TriangleSide side : TriangleSide.values()) {
-				renderNode(graphics, visitedNodes, node.getNeighbour(side));
+				renderNode(node.getNeighbour(side), node, visitedNodes, graphics);
 			}
 		}
+	}
+
+	private void drawConnection(PolygonGraphNode origin, PolygonGraphNode node, Graphics2D graphics) {
+		final Point2D first = origin.getCenter();
+		final Point2D second = node.getCenter();
+		graphics.drawLine(translateXIntoFramespace(first.getX()), translateYIntoFramespace(first.getY()), translateXIntoFramespace(second.getX()),
+				translateYIntoFramespace(second.getY()));
 	}
 
 	private void drawCenter(PolygonGraphNode node, Graphics2D graphics) {
