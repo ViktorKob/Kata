@@ -84,9 +84,15 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		Collection<PolygonVertex> polygons = combineSimplePolygons(SIMPLE_CLEAN_SAMPLE, COLINEAR_SAMPLE, SIMPLE_SAMPLE_WITH_CUTS, MERGE_CASES,
 				BOOK_EXAMPLE_POLYGON);
 		polygons = appendHoles(polygons, SIMPLE_CLEAN_SAMPLE_HOLE, COLINEAR_SAMPLE_HOLE);
+		long stamp = System.nanoTime();
 		final Collection<PolygonVertex> monotonePolygons = util.getMonotoneParts(polygons);
+		System.out.println("Time spend building monotone parts: " + (System.nanoTime() - stamp) / 1000000.0 + " ms");
+		stamp = System.nanoTime();
 		final Collection<PolygonTriangle> intermediateTriangleGraphs = util.triangulateMonotonePolygons(monotonePolygons);
+		System.out.println("Time spend building initial triangle graphs: " + (System.nanoTime() - stamp) / 1000000.0 + " ms");
+		stamp = System.nanoTime();
 		final Collection<PolygonGraphNode> triangleGraphs = util.finalizeTriangleGraphs(intermediateTriangleGraphs);
+		System.out.println("Time spend finalizing graphs: " + (System.nanoTime() - stamp) / 1000000.0 + " ms");
 		final PolygonRenderer renderer = new PolygonRenderer(polygons, monotonePolygons, intermediateTriangleGraphs, triangleGraphs);
 		renderer.setVisible(true);
 	}
@@ -137,19 +143,46 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		graphics.setComposite(AlphaComposite.getInstance(SRC_OVER));
 		if (renderTriangles) {
 			renderTriangles(graphics);
+			graphics.setColor(new Color(.0f, .5f, .0f, 1.0f));
+			graphics.drawString("Triangles (3)", 10, 80);
+		} else {
+			graphics.setColor(new Color(.5f, .0f, .0f, 1.0f));
+			graphics.drawString("Triangles (3)", 10, 80);
 		}
 		if (renderMonotones) {
 			renderMonotonePieces(graphics);
+			graphics.setColor(new Color(.0f, .5f, .0f, 1.0f));
+			graphics.drawString("Monotone Polygons (2)", 10, 60);
+		} else {
+			graphics.setColor(new Color(.5f, .0f, .0f, 1.0f));
+			graphics.drawString("Monotone Polygons (2)", 10, 60);
 		}
 		if (renderOriginal) {
 			renderOriginalPolygon(graphics);
+			graphics.setColor(new Color(.0f, .5f, .0f, 1.0f));
+			graphics.drawString("Polygons (1)", 10, 40);
+		} else {
+			graphics.setColor(new Color(.5f, .0f, .0f, 1.0f));
+			graphics.drawString("Polygons (1)", 10, 40);
 		}
 		if (renderTriangleGraph) {
 			renderTriangleGraphs(graphics);
+			graphics.setColor(new Color(.0f, .5f, .0f, 1.0f));
+			graphics.drawString("Triangle Graphs (4)", 10, 100);
+		} else {
+			graphics.setColor(new Color(.5f, .0f, .0f, 1.0f));
+			graphics.drawString("Triangle Graphs (4)", 10, 100);
 		}
 		if (renderVertices) {
 			renderVertices(graphics);
+			graphics.setColor(new Color(.0f, .5f, .0f, 1.0f));
+			graphics.drawString("Vertices (5)", 10, 120);
+		} else {
+			graphics.setColor(new Color(.5f, .0f, .0f, 1.0f));
+			graphics.drawString("Vertices (5)", 10, 120);
 		}
+		graphics.setColor(new Color(.0f, .0f, .0f, 1.0f));
+		graphics.drawString("(Esc) to exit", 10, 140);
 	}
 
 	private void renderTriangles(final Graphics2D graphics) {
