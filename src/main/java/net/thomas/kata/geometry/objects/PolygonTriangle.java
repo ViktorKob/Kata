@@ -6,6 +6,7 @@ import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.VE
 import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.VERTEX_2;
 import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.VERTEX_3;
 
+import java.awt.geom.Point2D;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -66,6 +67,16 @@ public class PolygonTriangle {
 
 	public PolygonTriangle getNeighbour(TriangleSide sideId) {
 		return neighbours[sideId.ordinal()];
+	}
+
+	public Point2D calculateCenter() {
+		double x = 0.0d;
+		double y = 0.0d;
+		for (final Point2D vertex : vertices) {
+			x += vertex.getX();
+			y += vertex.getY();
+		}
+		return new Point2D.Double(x / vertices.length, y / vertices.length);
 	}
 
 	public boolean isNeighbourTo(PolygonTriangle candidate) {

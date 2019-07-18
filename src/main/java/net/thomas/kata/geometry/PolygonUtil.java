@@ -2,7 +2,7 @@ package net.thomas.kata.geometry;
 
 import java.util.Collection;
 
-import net.thomas.kata.geometry.objects.PolygonGraphNode;
+import net.thomas.kata.geometry.objects.PortalGraphNode;
 import net.thomas.kata.geometry.objects.PolygonTriangle;
 import net.thomas.kata.geometry.objects.PolygonVertex;
 
@@ -11,5 +11,5 @@ public interface PolygonUtil {
 
 	public Collection<PolygonTriangle> triangulateMonotonePolygons(Collection<PolygonVertex> monotonePolygons);
 
-	public Collection<PolygonGraphNode> finalizeTriangleGraphs(Collection<PolygonTriangle> intermediateTriangleGraphs);
+	public Collection<PortalGraphNode> buildPortalGraphs(Collection<PolygonTriangle> triangleGraphs);
 }

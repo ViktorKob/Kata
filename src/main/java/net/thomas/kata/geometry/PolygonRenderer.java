@@ -25,11 +25,11 @@ import javax.swing.JFrame;
 
 import net.thomas.kata.geometry.algorithms.PolygonUtilImpl;
 import net.thomas.kata.geometry.objects.PolygonBuilder;
-import net.thomas.kata.geometry.objects.PolygonGraphNode;
 import net.thomas.kata.geometry.objects.PolygonTriangle;
 import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide;
 import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex;
 import net.thomas.kata.geometry.objects.PolygonVertex;
+import net.thomas.kata.geometry.objects.PortalGraphNode;
 
 public class PolygonRenderer extends JFrame implements KeyListener {
 	private static final long serialVersionUID = 1L;
@@ -70,8 +70,8 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 
 	private final Collection<PolygonVertex> monotonePolygons;
 	private final Collection<PolygonVertex> originalPolygons;
-	private final Collection<PolygonTriangle> intermediateTriangleGraphs;
-	private final Collection<PolygonGraphNode> triangleGraphs;
+	private final Collection<PolygonTriangle> triangleGraphs;
+	private final Collection<PortalGraphNode> portalGraphs;
 
 	private boolean renderOriginal;
 	private boolean renderMonotones;
@@ -88,12 +88,12 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		final Collection<PolygonVertex> monotonePolygons = util.getMonotoneParts(polygons);
 		System.out.println("Time spend building monotone parts: " + (System.nanoTime() - stamp) / 1000000.0 + " ms");
 		stamp = System.nanoTime();
-		final Collection<PolygonTriangle> intermediateTriangleGraphs = util.triangulateMonotonePolygons(monotonePolygons);
+		final Collection<PolygonTriangle> triangleGraphs = util.triangulateMonotonePolygons(monotonePolygons);
 		System.out.println("Time spend building initial triangle graphs: " + (System.nanoTime() - stamp) / 1000000.0 + " ms");
 		stamp = System.nanoTime();
-		final Collection<PolygonGraphNode> triangleGraphs = util.finalizeTriangleGraphs(intermediateTriangleGraphs);
+		final Collection<PortalGraphNode> portalGraphs = util.buildPortalGraphs(triangleGraphs);
 		System.out.println("Time spend finalizing graphs: " + (System.nanoTime() - stamp) / 1000000.0 + " ms");
-		final PolygonRenderer renderer = new PolygonRenderer(polygons, monotonePolygons, intermediateTriangleGraphs, triangleGraphs);
+		final PolygonRenderer renderer = new PolygonRenderer(polygons, monotonePolygons, triangleGraphs, portalGraphs);
 		renderer.setVisible(true);
 	}
 
@@ -123,12 +123,12 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		return mergedPolygons;
 	}
 
-	public PolygonRenderer(Collection<PolygonVertex> originalPolygons, Collection<PolygonVertex> monotonePolygons,
-			Collection<PolygonTriangle> intermediateTriangleGraphs, Collection<PolygonGraphNode> triangleGraphs) {
+	public PolygonRenderer(Collection<PolygonVertex> originalPolygons, Collection<PolygonVertex> monotonePolygons, Collection<PolygonTriangle> triangleGraphs,
+			Collection<PortalGraphNode> portalGraphs) {
 		this.originalPolygons = originalPolygons;
 		this.monotonePolygons = monotonePolygons;
-		this.intermediateTriangleGraphs = intermediateTriangleGraphs;
 		this.triangleGraphs = triangleGraphs;
+		this.portalGraphs = portalGraphs;
 		setLocation(500, 400);
 		setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -168,10 +168,10 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		if (renderTriangleGraph) {
 			renderTriangleGraphs(graphics);
 			graphics.setColor(new Color(.0f, .5f, .0f, 1.0f));
-			graphics.drawString("Triangle Graphs (4)", 10, 100);
+			graphics.drawString("Portal Graphs (4)", 10, 100);
 		} else {
 			graphics.setColor(new Color(.5f, .0f, .0f, 1.0f));
-			graphics.drawString("Triangle Graphs (4)", 10, 100);
+			graphics.drawString("Portal Graphs (4)", 10, 100);
 		}
 		if (renderVertices) {
 			renderVertices(graphics);
@@ -188,7 +188,7 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 	private void renderTriangles(final Graphics2D graphics) {
 		graphics.setStroke(new BasicStroke(4.0f));
 		graphics.setColor(new Color(.0f, 0.8f, 0.0f, 1.0f));
-		for (final PolygonTriangle triangle : intermediateTriangleGraphs) {
+		for (final PolygonTriangle triangle : triangleGraphs) {
 			drawEdges(triangle, graphics);
 		}
 	}
@@ -211,19 +211,19 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 
 	private void renderTriangleGraphs(Graphics2D graphics) {
 		graphics.setStroke(new BasicStroke(2.0f));
-		final Set<PolygonGraphNode> visitedNodes = new HashSet<>();
-		for (final PolygonGraphNode node : triangleGraphs) {
+		final Set<PortalGraphNode> visitedNodes = new HashSet<>();
+		for (final PortalGraphNode node : portalGraphs) {
 			renderNode(node, visitedNodes, graphics);
 		}
 	}
 
-	private void renderNode(final PolygonGraphNode node, final Set<PolygonGraphNode> visitedNodes, Graphics2D graphics) {
+	private void renderNode(final PortalGraphNode node, final Set<PortalGraphNode> visitedNodes, Graphics2D graphics) {
 		if (!visitedNodes.contains(node)) {
 			visitedNodes.add(node);
 			graphics.setColor(new Color(.6f, .6f, 0.6f, 1.0f));
 			drawCenter(node, graphics);
 			for (final TriangleSide side : TriangleSide.values()) {
-				final PolygonGraphNode neighbour = node.getNeighbour(side);
+				final PortalGraphNode neighbour = node.getNeighbour(side);
 				if (neighbour != null) {
 					renderNode(neighbour, visitedNodes, graphics);
 					graphics.setColor(new Color(.3f, .3f, 0.3f, 1.0f));
@@ -233,14 +233,14 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		}
 	}
 
-	private void drawConnection(PolygonGraphNode origin, PolygonGraphNode node, Graphics2D graphics) {
+	private void drawConnection(PortalGraphNode origin, PortalGraphNode node, Graphics2D graphics) {
 		final Point2D first = origin.getCenter();
 		final Point2D second = node.getCenter();
 		graphics.drawLine(translateXIntoFramespace(first.getX()), translateYIntoFramespace(first.getY()), translateXIntoFramespace(second.getX()),
 				translateYIntoFramespace(second.getY()));
 	}
 
-	private void drawCenter(PolygonGraphNode node, Graphics2D graphics) {
+	private void drawCenter(PortalGraphNode node, Graphics2D graphics) {
 		final Point2D center = node.getCenter();
 		graphics.fillOval(translateXIntoFramespace(center.getX()) - POINT_DIAMETER / 2, translateYIntoFramespace(center.getY()) - POINT_DIAMETER / 2,
 				POINT_DIAMETER, POINT_DIAMETER);

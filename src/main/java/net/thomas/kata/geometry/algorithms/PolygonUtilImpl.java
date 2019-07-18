@@ -34,7 +34,7 @@ import java.util.Stack;
 import java.util.function.Function;
 
 import net.thomas.kata.geometry.PolygonUtil;
-import net.thomas.kata.geometry.objects.PolygonGraphNode;
+import net.thomas.kata.geometry.objects.PortalGraphNode;
 import net.thomas.kata.geometry.objects.PolygonTriangle;
 import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide;
 import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex;
@@ -54,8 +54,8 @@ public class PolygonUtilImpl implements PolygonUtil {
 	}
 
 	@Override
-	public Collection<PolygonGraphNode> finalizeTriangleGraphs(Collection<PolygonTriangle> intermediateTriangleGraphs) {
-		return new TriangleGraphConverter(intermediateTriangleGraphs).buildFinalGraphs();
+	public Collection<PortalGraphNode> buildPortalGraphs(Collection<PolygonTriangle> triangleGraphs) {
+		return new TriangleGraphConverter(triangleGraphs).buildPortalGraphs();
 	}
 
 	/***
@@ -417,10 +417,10 @@ public class PolygonUtilImpl implements PolygonUtil {
 			this.intermediateTriangleGraphs = intermediateTriangleGraphs;
 		}
 
-		public Collection<PolygonGraphNode> buildFinalGraphs() {
+		public Collection<PortalGraphNode> buildPortalGraphs() {
 			connectAllAdjacentTriangles(intermediateTriangleGraphs);
 			final HashSet<PolygonTriangle> pendingNodes = extractAllUniqueTriangles(intermediateTriangleGraphs);
-			return convertToFinalGraphs(pendingNodes);
+			return convertToPortalGraphs(pendingNodes);
 		}
 
 		private void connectAllAdjacentTriangles(Collection<PolygonTriangle> intermediateTriangleGraphs) {
@@ -511,18 +511,18 @@ public class PolygonUtilImpl implements PolygonUtil {
 			}
 		}
 
-		private Collection<PolygonGraphNode> convertToFinalGraphs(final HashSet<PolygonTriangle> pendingNodes) {
-			final Map<PolygonTriangle, PolygonGraphNode> finalGraphs = new HashMap<>();
+		private Collection<PortalGraphNode> convertToPortalGraphs(final HashSet<PolygonTriangle> pendingNodes) {
+			final Map<PolygonTriangle, PortalGraphNode> portalGraphs = new HashMap<>();
 			for (final PolygonTriangle triangle : pendingNodes) {
-				if (!finalGraphs.containsKey(triangle)) {
-					convertNodeWithNeighbours(triangle, finalGraphs);
+				if (!portalGraphs.containsKey(triangle)) {
+					convertNodeWithNeighbours(triangle, portalGraphs);
 				}
 			}
-			return extractDistinctGraphs(finalGraphs);
+			return extractDistinctGraphs(portalGraphs);
 		}
 
-		private void convertNodeWithNeighbours(PolygonTriangle triangle, Map<PolygonTriangle, PolygonGraphNode> finalGraph) {
-			final PolygonGraphNode node = new PolygonGraphNode(triangle);
+		private void convertNodeWithNeighbours(PolygonTriangle triangle, Map<PolygonTriangle, PortalGraphNode> finalGraph) {
+			final PortalGraphNode node = new PortalGraphNode(triangle);
 			finalGraph.put(triangle, node);
 			for (final TriangleSide side : TriangleSide.values()) {
 				if (triangle.getNeighbour(side) != null) {
@@ -531,18 +531,18 @@ public class PolygonUtilImpl implements PolygonUtil {
 			}
 		}
 
-		private void linkNodesIfNeighbourHasBeenConvertedAlready(PolygonTriangle triangle, Map<PolygonTriangle, PolygonGraphNode> finalGraph,
-				final PolygonGraphNode node, final TriangleSide side) {
+		private void linkNodesIfNeighbourHasBeenConvertedAlready(PolygonTriangle triangle, Map<PolygonTriangle, PortalGraphNode> finalGraph,
+				final PortalGraphNode node, final TriangleSide side) {
 			final PolygonTriangle neighbourTriangle = triangle.getNeighbour(side);
 			if (finalGraph.containsKey(neighbourTriangle)) {
-				final PolygonGraphNode neighbourNode = finalGraph.get(neighbourTriangle);
+				final PortalGraphNode neighbourNode = finalGraph.get(neighbourTriangle);
 				node.setNeighbour(side, neighbourNode);
 				linkBackToNode(triangle, node, neighbourTriangle, neighbourNode);
 			}
 		}
 
-		private void linkBackToNode(PolygonTriangle triangle, final PolygonGraphNode node, final PolygonTriangle neighbourTriangle,
-				final PolygonGraphNode neighbourNode) {
+		private void linkBackToNode(PolygonTriangle triangle, final PortalGraphNode node, final PolygonTriangle neighbourTriangle,
+				final PortalGraphNode neighbourNode) {
 			for (final TriangleSide neighbourSide : TriangleSide.values()) {
 				if (neighbourTriangle.getNeighbour(neighbourSide) == triangle) {
 					neighbourNode.setNeighbour(neighbourSide, node);
@@ -551,10 +551,10 @@ public class PolygonUtilImpl implements PolygonUtil {
 			}
 		}
 
-		private Collection<PolygonGraphNode> extractDistinctGraphs(Map<PolygonTriangle, PolygonGraphNode> finalGraphs) {
-			final Collection<PolygonGraphNode> distinctGraphs = new HashSet<>();
-			final Set<PolygonGraphNode> visitedNodes = new HashSet<>();
-			for (final PolygonGraphNode node : finalGraphs.values()) {
+		private Collection<PortalGraphNode> extractDistinctGraphs(Map<PolygonTriangle, PortalGraphNode> finalGraphs) {
+			final Collection<PortalGraphNode> distinctGraphs = new HashSet<>();
+			final Set<PortalGraphNode> visitedNodes = new HashSet<>();
+			for (final PortalGraphNode node : finalGraphs.values()) {
 				if (!visitedNodes.contains(node)) {
 					distinctGraphs.add(node);
 				}
@@ -563,7 +563,7 @@ public class PolygonUtilImpl implements PolygonUtil {
 			return distinctGraphs;
 		}
 
-		private void visitNode(final PolygonGraphNode node, final Set<PolygonGraphNode> visitedNodes) {
+		private void visitNode(final PortalGraphNode node, final Set<PortalGraphNode> visitedNodes) {
 			if (node != null && !visitedNodes.contains(node)) {
 				visitedNodes.add(node);
 				visitNode(node.getNeighbour(SIDE_1), visitedNodes);
