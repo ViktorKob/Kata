@@ -22,6 +22,10 @@ public class PortalGraphEdge {
 		return destination;
 	}
 
+	public Portal getPortal() {
+		return portal;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;

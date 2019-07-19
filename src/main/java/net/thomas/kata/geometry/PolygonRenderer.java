@@ -29,6 +29,7 @@ import net.thomas.kata.geometry.objects.PolygonBuilder;
 import net.thomas.kata.geometry.objects.PolygonTriangle;
 import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex;
 import net.thomas.kata.geometry.objects.PolygonVertex;
+import net.thomas.kata.geometry.objects.Portal;
 import net.thomas.kata.geometry.objects.PortalGraphEdge;
 import net.thomas.kata.geometry.objects.PortalGraphNode;
 
@@ -254,9 +255,9 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 
 	private void drawConnection(PortalGraphEdge edge, Graphics2D graphics) {
 		final Point2D first = edge.getSource().getCenter();
-		final Point2D second = edge.getDestination().getCenter();
-		graphics.drawLine(translateXIntoFramespace(first.getX()), translateYIntoFramespace(first.getY()), translateXIntoFramespace(second.getX()),
-				translateYIntoFramespace(second.getY()));
+		final Point2D portalCenter = edge.getPortal().getCenter();
+		graphics.drawLine(translateXIntoFramespace(first.getX()), translateYIntoFramespace(first.getY()), translateXIntoFramespace(portalCenter.getX()),
+				translateYIntoFramespace(portalCenter.getY()));
 	}
 
 	private void drawCenter(PortalGraphNode node, Graphics2D graphics) {

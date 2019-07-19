@@ -11,4 +11,8 @@ public class Portal {
 		this.boundaryLeft = boundaryLeft;
 		this.boundaryRight = boundaryRight;
 	}
+
+	public Point2D getCenter() {
+		return new Point2D.Double((boundaryLeft.getX() + boundaryRight.getX()) / 2, (boundaryLeft.getY() + boundaryRight.getY()) / 2);
+	}
 }
