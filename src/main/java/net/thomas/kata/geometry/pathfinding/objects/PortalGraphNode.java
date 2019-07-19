@@ -1,4 +1,4 @@
-package net.thomas.kata.geometry.objects;
+package net.thomas.kata.geometry.pathfinding.objects;
 
 import java.util.HashSet;
 import java.util.Iterator;

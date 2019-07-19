@@ -1,10 +1,12 @@
-package net.thomas.kata.geometry.objects;
+package net.thomas.kata.geometry.pathfinding.objects;
 
 import static org.junit.Assert.assertEquals;
 
 import java.awt.geom.Point2D;
 
 import org.junit.Test;
+
+import net.thomas.kata.geometry.pathfinding.objects.Portal;
 
 public class PortalUnitTest {
 	private static final Point2D SOME_POINT = new Point2D.Double(1, 2);

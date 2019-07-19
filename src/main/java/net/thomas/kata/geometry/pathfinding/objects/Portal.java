@@ -1,4 +1,4 @@
-package net.thomas.kata.geometry.objects;
+package net.thomas.kata.geometry.pathfinding.objects;
 
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;

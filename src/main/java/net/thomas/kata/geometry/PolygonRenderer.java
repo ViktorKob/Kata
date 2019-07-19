@@ -25,9 +25,9 @@ import net.thomas.kata.geometry.algorithms.PolygonUtilImpl;
 import net.thomas.kata.geometry.objects.PolygonBuilder;
 import net.thomas.kata.geometry.objects.PolygonTriangle;
 import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex;
+import net.thomas.kata.geometry.pathfinding.objects.Portal;
+import net.thomas.kata.geometry.pathfinding.objects.PortalGraphNode;
 import net.thomas.kata.geometry.objects.PolygonVertex;
-import net.thomas.kata.geometry.objects.Portal;
-import net.thomas.kata.geometry.objects.PortalGraphNode;
 
 public class PolygonRenderer extends JFrame implements KeyListener {
 	private static final long serialVersionUID = 1L;

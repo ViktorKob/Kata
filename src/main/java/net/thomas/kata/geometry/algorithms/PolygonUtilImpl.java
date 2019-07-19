@@ -32,9 +32,9 @@ import net.thomas.kata.geometry.PolygonUtil;
 import net.thomas.kata.geometry.objects.PolygonTriangle;
 import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide;
 import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex;
+import net.thomas.kata.geometry.pathfinding.objects.Portal;
+import net.thomas.kata.geometry.pathfinding.objects.PortalGraphNode;
 import net.thomas.kata.geometry.objects.PolygonVertex;
-import net.thomas.kata.geometry.objects.Portal;
-import net.thomas.kata.geometry.objects.PortalGraphNode;
 
 public class PolygonUtilImpl implements PolygonUtil {
 	public static final double EPSILON = 0.0000001d;
