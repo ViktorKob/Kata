@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.swing.JFrame;
@@ -25,9 +26,11 @@ import net.thomas.kata.geometry.algorithms.PolygonUtilImpl;
 import net.thomas.kata.geometry.objects.PolygonBuilder;
 import net.thomas.kata.geometry.objects.PolygonTriangle;
 import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex;
+import net.thomas.kata.geometry.objects.PolygonVertex;
+import net.thomas.kata.geometry.pathfinding.PathFindingUtil;
 import net.thomas.kata.geometry.pathfinding.objects.Portal;
 import net.thomas.kata.geometry.pathfinding.objects.PortalGraphNode;
-import net.thomas.kata.geometry.objects.PolygonVertex;
+import net.thomas.kata.geometry.pathfinding.objects.Triangle;
 
 public class PolygonRenderer extends JFrame implements KeyListener {
 	private static final long serialVersionUID = 1L;
@@ -69,7 +72,7 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 	private final Collection<PolygonVertex> monotonePolygons;
 	private final Collection<PolygonVertex> originalPolygons;
 	private final Collection<PolygonTriangle> triangleGraphs;
-	private final Collection<PortalGraphNode> portalGraphs;
+	private final PathFindingUtil pathFindingUtil;
 
 	private boolean renderOriginal;
 	private boolean renderMonotones;
@@ -89,9 +92,9 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		final Collection<PolygonTriangle> triangleGraphs = util.triangulateMonotonePolygons(monotonePolygons);
 		System.out.println("Time spend building initial triangle graphs: " + (System.nanoTime() - stamp) / 1000000.0 + " ms");
 		stamp = System.nanoTime();
-		final Collection<PortalGraphNode> portalGraphs = util.buildPortalGraphs(triangleGraphs);
-		System.out.println("Time spend converting graphs: " + (System.nanoTime() - stamp) / 1000000.0 + " ms");
-		final PolygonRenderer renderer = new PolygonRenderer(polygons, monotonePolygons, triangleGraphs, portalGraphs);
+		final PathFindingUtil pathFindingUtil = util.buildPathFindingUtil(triangleGraphs);
+		System.out.println("Time spend building Path Finder Util: " + (System.nanoTime() - stamp) / 1000000.0 + " ms");
+		final PolygonRenderer renderer = new PolygonRenderer(polygons, monotonePolygons, triangleGraphs, pathFindingUtil);
 		renderer.setVisible(true);
 	}
 
@@ -122,11 +125,11 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 	}
 
 	public PolygonRenderer(Collection<PolygonVertex> originalPolygons, Collection<PolygonVertex> monotonePolygons, Collection<PolygonTriangle> triangleGraphs,
-			Collection<PortalGraphNode> portalGraphs2) {
+			PathFindingUtil pathFindingUtil) {
 		this.originalPolygons = originalPolygons;
 		this.monotonePolygons = monotonePolygons;
 		this.triangleGraphs = triangleGraphs;
-		portalGraphs = portalGraphs2;
+		this.pathFindingUtil = pathFindingUtil;
 		setLocation(500, 400);
 		setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -211,20 +214,12 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		renderNodes(graphics);
 	}
 
+	@SuppressWarnings("deprecation")
 	private void renderNodes(Graphics2D graphics) {
-		final Set<PortalGraphNode> visitedNodes = new HashSet<>();
 		graphics.setColor(new Color(.6f, .6f, 0.6f, 1.0f));
-		for (final PortalGraphNode node : portalGraphs) {
-			renderNodes(node, visitedNodes, graphics);
-		}
-	}
-
-	private void renderNodes(final PortalGraphNode node, final Set<PortalGraphNode> visitedNodes, Graphics2D graphics) {
-		if (!visitedNodes.contains(node)) {
-			visitedNodes.add(node);
-			drawPortal(node.getPortal(), graphics);
-			for (final PortalGraphNode neighbour : node) {
-				renderNodes(neighbour, visitedNodes, graphics);
+		for (final Entry<Triangle, Collection<PortalGraphNode>> triangleData : pathFindingUtil.getTriangle2PortalNodeMap().entrySet()) {
+			for (final PortalGraphNode node : triangleData.getValue()) {
+				drawPortal(node.getPortal(), graphics);
 			}
 		}
 	}
