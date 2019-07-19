@@ -29,6 +29,10 @@ public class PortalGraphEdge extends Line2D.Double {
 		return portal;
 	}
 
+	public Point2D getIntersectionWithPortal() {
+		return portal.getBestIntersectionPoint(this);
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;

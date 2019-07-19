@@ -251,9 +251,9 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 
 	private void drawConnection(PortalGraphEdge edge, Graphics2D graphics) {
 		final Point2D first = edge.getSource().getCenter();
-		final Point2D portalCenter = edge.getPortal().getCenter();
-		graphics.drawLine(translateXIntoFramespace(first.getX()), translateYIntoFramespace(first.getY()), translateXIntoFramespace(portalCenter.getX()),
-				translateYIntoFramespace(portalCenter.getY()));
+		final Point2D second = edge.getIntersectionWithPortal();
+		graphics.drawLine(translateXIntoFramespace(first.getX()), translateYIntoFramespace(first.getY()), translateXIntoFramespace(second.getX()),
+				translateYIntoFramespace(second.getY()));
 	}
 
 	private void drawCenter(PortalGraphNode node, Graphics2D graphics) {
