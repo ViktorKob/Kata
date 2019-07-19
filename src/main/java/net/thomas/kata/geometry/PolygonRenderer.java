@@ -27,7 +27,7 @@ import net.thomas.kata.geometry.objects.PolygonTriangle;
 import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex;
 import net.thomas.kata.geometry.objects.PolygonVertex;
 import net.thomas.kata.geometry.objects.Portal;
-import net.thomas.kata.geometry.objects.PortalGraphNodeV2;
+import net.thomas.kata.geometry.objects.PortalGraphNode;
 
 public class PolygonRenderer extends JFrame implements KeyListener {
 	private static final long serialVersionUID = 1L;
@@ -69,7 +69,7 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 	private final Collection<PolygonVertex> monotonePolygons;
 	private final Collection<PolygonVertex> originalPolygons;
 	private final Collection<PolygonTriangle> triangleGraphs;
-	private final Collection<PortalGraphNodeV2> portalGraphs;
+	private final Collection<PortalGraphNode> portalGraphs;
 
 	private boolean renderOriginal;
 	private boolean renderMonotones;
@@ -89,7 +89,7 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		final Collection<PolygonTriangle> triangleGraphs = util.triangulateMonotonePolygons(monotonePolygons);
 		System.out.println("Time spend building initial triangle graphs: " + (System.nanoTime() - stamp) / 1000000.0 + " ms");
 		stamp = System.nanoTime();
-		final Collection<PortalGraphNodeV2> portalGraphs = util.buildPortalGraphs(triangleGraphs);
+		final Collection<PortalGraphNode> portalGraphs = util.buildPortalGraphs(triangleGraphs);
 		System.out.println("Time spend converting graphs: " + (System.nanoTime() - stamp) / 1000000.0 + " ms");
 		final PolygonRenderer renderer = new PolygonRenderer(polygons, monotonePolygons, triangleGraphs, portalGraphs);
 		renderer.setVisible(true);
@@ -122,7 +122,7 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 	}
 
 	public PolygonRenderer(Collection<PolygonVertex> originalPolygons, Collection<PolygonVertex> monotonePolygons, Collection<PolygonTriangle> triangleGraphs,
-			Collection<PortalGraphNodeV2> portalGraphs2) {
+			Collection<PortalGraphNode> portalGraphs2) {
 		this.originalPolygons = originalPolygons;
 		this.monotonePolygons = monotonePolygons;
 		this.triangleGraphs = triangleGraphs;
@@ -212,18 +212,18 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 	}
 
 	private void renderNodes(Graphics2D graphics) {
-		final Set<PortalGraphNodeV2> visitedNodes = new HashSet<>();
+		final Set<PortalGraphNode> visitedNodes = new HashSet<>();
 		graphics.setColor(new Color(.6f, .6f, 0.6f, 1.0f));
-		for (final PortalGraphNodeV2 node : portalGraphs) {
+		for (final PortalGraphNode node : portalGraphs) {
 			renderNodes(node, visitedNodes, graphics);
 		}
 	}
 
-	private void renderNodes(final PortalGraphNodeV2 node, final Set<PortalGraphNodeV2> visitedNodes, Graphics2D graphics) {
+	private void renderNodes(final PortalGraphNode node, final Set<PortalGraphNode> visitedNodes, Graphics2D graphics) {
 		if (!visitedNodes.contains(node)) {
 			visitedNodes.add(node);
 			drawPortal(node.getPortal(), graphics);
-			for (final PortalGraphNodeV2 neighbour : node) {
+			for (final PortalGraphNode neighbour : node) {
 				renderNodes(neighbour, visitedNodes, graphics);
 			}
 		}

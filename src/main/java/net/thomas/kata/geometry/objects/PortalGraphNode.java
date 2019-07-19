@@ -4,17 +4,17 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-public class PortalGraphNodeV2 implements Iterable<PortalGraphNodeV2> {
+public class PortalGraphNode implements Iterable<PortalGraphNode> {
 
 	private final Portal portal;
-	private final Set<PortalGraphNodeV2> neighbours;
+	private final Set<PortalGraphNode> neighbours;
 
-	public PortalGraphNodeV2(Portal portal) {
+	public PortalGraphNode(Portal portal) {
 		this.portal = portal;
 		neighbours = new HashSet<>();
 	}
 
-	public void addNeighbour(PortalGraphNodeV2 node) {
+	public void addNeighbour(PortalGraphNode node) {
 		neighbours.add(node);
 	}
 
@@ -23,7 +23,7 @@ public class PortalGraphNodeV2 implements Iterable<PortalGraphNodeV2> {
 	}
 
 	@Override
-	public Iterator<PortalGraphNodeV2> iterator() {
+	public Iterator<PortalGraphNode> iterator() {
 		return neighbours.iterator();
 	}
 
@@ -43,10 +43,10 @@ public class PortalGraphNodeV2 implements Iterable<PortalGraphNodeV2> {
 		if (obj == null) {
 			return false;
 		}
-		if (!(obj instanceof PortalGraphNodeV2)) {
+		if (!(obj instanceof PortalGraphNode)) {
 			return false;
 		}
-		final PortalGraphNodeV2 other = (PortalGraphNodeV2) obj;
+		final PortalGraphNode other = (PortalGraphNode) obj;
 		if (!portal.equals(other.portal)) {
 			return false;
 		}
