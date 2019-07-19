@@ -2,7 +2,8 @@ package net.thomas.kata.geometry;
 
 import static java.awt.AlphaComposite.SRC_OVER;
 import static java.util.Arrays.asList;
-import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide.matching;
+import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide.matchingVertex;
+import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.TRIANGLE_VERTICES;
 import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.VERTEX_1;
 import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.VERTEX_2;
 import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.VERTEX_3;
@@ -26,9 +27,9 @@ import javax.swing.JFrame;
 import net.thomas.kata.geometry.algorithms.PolygonUtilImpl;
 import net.thomas.kata.geometry.objects.PolygonBuilder;
 import net.thomas.kata.geometry.objects.PolygonTriangle;
-import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide;
 import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex;
 import net.thomas.kata.geometry.objects.PolygonVertex;
+import net.thomas.kata.geometry.objects.PortalGraphEdge;
 import net.thomas.kata.geometry.objects.PortalGraphNode;
 
 public class PolygonRenderer extends JFrame implements KeyListener {
@@ -92,7 +93,7 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		System.out.println("Time spend building initial triangle graphs: " + (System.nanoTime() - stamp) / 1000000.0 + " ms");
 		stamp = System.nanoTime();
 		final Collection<PortalGraphNode> portalGraphs = util.buildPortalGraphs(triangleGraphs);
-		System.out.println("Time spend finalizing graphs: " + (System.nanoTime() - stamp) / 1000000.0 + " ms");
+		System.out.println("Time spend converting graphs: " + (System.nanoTime() - stamp) / 1000000.0 + " ms");
 		final PolygonRenderer renderer = new PolygonRenderer(polygons, monotonePolygons, triangleGraphs, portalGraphs);
 		renderer.setVisible(true);
 	}
@@ -210,32 +211,50 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 	}
 
 	private void renderTriangleGraphs(Graphics2D graphics) {
-		graphics.setStroke(new BasicStroke(2.0f));
+		renderNodes(graphics);
+		renderEdges(graphics);
+	}
+
+	private void renderNodes(Graphics2D graphics) {
 		final Set<PortalGraphNode> visitedNodes = new HashSet<>();
+		graphics.setColor(new Color(.6f, .6f, 0.6f, 1.0f));
 		for (final PortalGraphNode node : portalGraphs) {
-			renderNode(node, visitedNodes, graphics);
+			renderNodes(node, visitedNodes, graphics);
 		}
 	}
 
-	private void renderNode(final PortalGraphNode node, final Set<PortalGraphNode> visitedNodes, Graphics2D graphics) {
+	private void renderEdges(Graphics2D graphics) {
+		final Set<PortalGraphNode> visitedNodes = new HashSet<>();
+		graphics.setColor(new Color(.3f, .3f, 0.3f, 1.0f));
+		graphics.setStroke(new BasicStroke(2.0f));
+		for (final PortalGraphNode node : portalGraphs) {
+			renderEdges(node, visitedNodes, graphics);
+		}
+	}
+
+	private void renderNodes(final PortalGraphNode node, final Set<PortalGraphNode> visitedNodes, Graphics2D graphics) {
 		if (!visitedNodes.contains(node)) {
 			visitedNodes.add(node);
-			graphics.setColor(new Color(.6f, .6f, 0.6f, 1.0f));
 			drawCenter(node, graphics);
-			for (final TriangleSide side : TriangleSide.values()) {
-				final PortalGraphNode neighbour = node.getNeighbour(side);
-				if (neighbour != null) {
-					renderNode(neighbour, visitedNodes, graphics);
-					graphics.setColor(new Color(.3f, .3f, 0.3f, 1.0f));
-					drawConnection(node, neighbour, graphics);
-				}
+			for (final PortalGraphEdge edge : node.getEdges()) {
+				renderNodes(edge.getDestination(), visitedNodes, graphics);
 			}
 		}
 	}
 
-	private void drawConnection(PortalGraphNode origin, PortalGraphNode node, Graphics2D graphics) {
-		final Point2D first = origin.getCenter();
-		final Point2D second = node.getCenter();
+	private void renderEdges(final PortalGraphNode node, final Set<PortalGraphNode> visitedNodes, Graphics2D graphics) {
+		if (!visitedNodes.contains(node)) {
+			visitedNodes.add(node);
+			for (final PortalGraphEdge edge : node.getEdges()) {
+				drawConnection(edge, graphics);
+				renderEdges(edge.getDestination(), visitedNodes, graphics);
+			}
+		}
+	}
+
+	private void drawConnection(PortalGraphEdge edge, Graphics2D graphics) {
+		final Point2D first = edge.getSource().getCenter();
+		final Point2D second = edge.getDestination().getCenter();
 		graphics.drawLine(translateXIntoFramespace(first.getX()), translateYIntoFramespace(first.getY()), translateXIntoFramespace(second.getX()),
 				translateYIntoFramespace(second.getY()));
 	}
@@ -286,8 +305,8 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		drawEdge(triangle.getVertex(VERTEX_2), triangle.getVertex(VERTEX_3), graphics);
 		drawEdge(triangle.getVertex(VERTEX_3), triangle.getVertex(VERTEX_1), graphics);
 		drawnTriangles.add(triangle);
-		for (final TriangleVertex vertexId : TriangleVertex.values()) {
-			final PolygonTriangle neighbour = triangle.getNeighbour(matching(vertexId));
+		for (final TriangleVertex vertexId : TRIANGLE_VERTICES) {
+			final PolygonTriangle neighbour = triangle.getNeighbour(matchingVertex(vertexId));
 			if (neighbour != null && !drawnTriangles.contains(neighbour)) {
 				drawEdges(neighbour, graphics, drawnTriangles);
 			}

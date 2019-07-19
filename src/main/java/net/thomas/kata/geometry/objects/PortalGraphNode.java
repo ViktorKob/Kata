@@ -1,25 +1,28 @@
 package net.thomas.kata.geometry.objects;
 
-import java.awt.geom.Point2D;
+import static java.util.Collections.unmodifiableCollection;
 
-import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide;
+import java.awt.geom.Point2D;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public class PortalGraphNode {
 
 	private final Point2D center;
-	private final PortalGraphNode[] neighbours;
+	private final Set<PortalGraphEdge> edges;
 
 	public PortalGraphNode(PolygonTriangle triangle) {
 		center = triangle.calculateCenter();
-		neighbours = new PortalGraphNode[TriangleSide.values().length];
+		edges = new HashSet<>();
 	}
 
-	public void setNeighbour(TriangleSide side, PortalGraphNode node) {
-		neighbours[side.ordinal()] = node;
+	public void addEdge(PortalGraphEdge edge) {
+		edges.add(edge);
 	}
 
-	public PortalGraphNode getNeighbour(TriangleSide side) {
-		return neighbours[side.ordinal()];
+	public Collection<PortalGraphEdge> getEdges() {
+		return unmodifiableCollection(edges);
 	}
 
 	public Point2D getCenter() {

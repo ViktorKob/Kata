@@ -1,10 +1,12 @@
 package net.thomas.kata.geometry.objects;
 
 import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide.TRIANGLE_SIDES;
-import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide.matching;
+import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide.matchingVertex;
+import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.TRIANGLE_VERTICES;
 import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.VERTEX_1;
 import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.VERTEX_2;
 import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.VERTEX_3;
+import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.getIdForNextVertex;
 
 import java.awt.geom.Point2D;
 import java.util.Arrays;
@@ -21,7 +23,20 @@ public class PolygonTriangle {
 	public static enum TriangleVertex {
 		VERTEX_1,
 		VERTEX_2,
-		VERTEX_3
+		VERTEX_3;
+		public static final TriangleVertex[] TRIANGLE_VERTICES = TriangleVertex.values();
+
+		public static TriangleVertex matchingSide(TriangleSide sideId) {
+			return TriangleVertex.values()[sideId.ordinal()];
+		}
+
+		public static TriangleVertex getIdForNextVertex(final TriangleVertex vertexId) {
+			return vertexId == VERTEX_3 ? VERTEX_1 : TRIANGLE_VERTICES[vertexId.ordinal() + 1];
+		}
+
+		public TriangleVertex getIdForNextVertex() {
+			return getIdForNextVertex(this);
+		}
 	}
 
 	public static enum TriangleSide {
@@ -30,7 +45,7 @@ public class PolygonTriangle {
 		SIDE_3; // VERTEX_3 -> VERTEX_1
 		public static final TriangleSide[] TRIANGLE_SIDES = TriangleSide.values();
 
-		public static TriangleSide matching(TriangleVertex vertexId) {
+		public static TriangleSide matchingVertex(TriangleVertex vertexId) {
 			return TriangleSide.values()[vertexId.ordinal()];
 		}
 	}
@@ -116,7 +131,7 @@ public class PolygonTriangle {
 		TriangleVertex leftVertex = null;
 		TriangleVertex rightVertex = null;
 
-		for (final TriangleVertex vertexId : TriangleVertex.values()) {
+		for (final TriangleVertex vertexId : TRIANGLE_VERTICES) {
 			if (!neighbour.contains(getVertex(vertexId))) {
 				leftVertex = getIdForNextVertex(vertexId);
 			}
@@ -124,12 +139,8 @@ public class PolygonTriangle {
 				rightVertex = getIdForNextVertex(vertexId);
 			}
 		}
-		setNeighbour(matching(leftVertex), neighbour);
-		neighbour.setNeighbour(matching(rightVertex), this);
-	}
-
-	private TriangleVertex getIdForNextVertex(final TriangleVertex vertexId) {
-		return vertexId == VERTEX_3 ? VERTEX_1 : TriangleVertex.values()[vertexId.ordinal() + 1];
+		setNeighbour(matchingVertex(leftVertex), neighbour);
+		neighbour.setNeighbour(matchingVertex(rightVertex), this);
 	}
 
 	@Override
@@ -164,9 +175,9 @@ public class PolygonTriangle {
 		builder.append(getVertex(VERTEX_1) + (!getVertex(VERTEX_1).getTwins().isEmpty() ? "(T)" : "") + ", ");
 		builder.append(getVertex(VERTEX_2) + (!getVertex(VERTEX_2).getTwins().isEmpty() ? "(T)" : "") + ", ");
 		builder.append(getVertex(VERTEX_3) + (!getVertex(VERTEX_3).getTwins().isEmpty() ? "(T)" : ""));
-		builder.append(" with neighbours VERTEX_1: " + (getNeighbour(matching(VERTEX_1)) != null));
-		builder.append(", VERTEX_2: " + (getNeighbour(matching(VERTEX_2)) != null));
-		builder.append(", VERTEX_3: " + (getNeighbour(matching(VERTEX_3)) != null));
+		builder.append(" with neighbours VERTEX_1: " + (getNeighbour(matchingVertex(VERTEX_1)) != null));
+		builder.append(", VERTEX_2: " + (getNeighbour(matchingVertex(VERTEX_2)) != null));
+		builder.append(", VERTEX_3: " + (getNeighbour(matchingVertex(VERTEX_3)) != null));
 		return builder.toString();
 	}
 }

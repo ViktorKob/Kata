@@ -17,9 +17,9 @@ import static net.thomas.kata.geometry.algorithms.VertexType.MERGE;
 import static net.thomas.kata.geometry.algorithms.VertexType.REGULAR;
 import static net.thomas.kata.geometry.algorithms.VertexType.SPLIT;
 import static net.thomas.kata.geometry.algorithms.VertexType.START;
-import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide.SIDE_1;
-import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide.SIDE_2;
-import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide.SIDE_3;
+import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide.TRIANGLE_SIDES;
+import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.TRIANGLE_VERTICES;
+import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.matchingSide;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,11 +34,12 @@ import java.util.Stack;
 import java.util.function.Function;
 
 import net.thomas.kata.geometry.PolygonUtil;
-import net.thomas.kata.geometry.objects.PortalGraphNode;
 import net.thomas.kata.geometry.objects.PolygonTriangle;
 import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide;
 import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex;
 import net.thomas.kata.geometry.objects.PolygonVertex;
+import net.thomas.kata.geometry.objects.PortalGraphEdge;
+import net.thomas.kata.geometry.objects.PortalGraphNode;
 
 public class PolygonUtilImpl implements PolygonUtil {
 	public static final double EPSILON = 0.0000001d;
@@ -438,7 +439,7 @@ public class PolygonUtilImpl implements PolygonUtil {
 
 		private void connectAdjacentTriangles(final Map<PolygonVertex, Set<PolygonTriangle>> verticesWithTwins, final PolygonTriangle triangle) {
 			final Set<PolygonTriangle> neighbourCandidates = new HashSet<>();
-			for (final TriangleVertex vertexId : TriangleVertex.values()) {
+			for (final TriangleVertex vertexId : TRIANGLE_VERTICES) {
 				final Set<PolygonTriangle> twinTriangles = verticesWithTwins.get(triangle.getVertex(vertexId));
 				if (twinTriangles != null) {
 					neighbourCandidates.addAll(twinTriangles.stream().filter((potentialCandidate) -> {
@@ -467,7 +468,7 @@ public class PolygonUtilImpl implements PolygonUtil {
 		}
 
 		private void checkForTwinVertices(final PolygonTriangle triangle, final Map<PolygonVertex, Set<PolygonTriangle>> verticesWithTwins) {
-			for (final TriangleVertex vertexId : TriangleVertex.values()) {
+			for (final TriangleVertex vertexId : TRIANGLE_VERTICES) {
 				final PolygonVertex vertex = triangle.getVertex(vertexId);
 				if (!vertex.getTwins().isEmpty()) {
 					if (!verticesWithTwins.containsKey(vertex)) {
@@ -498,9 +499,9 @@ public class PolygonUtilImpl implements PolygonUtil {
 		}
 
 		private void addNeighbours(HashSet<PolygonTriangle> nodes, PolygonTriangle currentTriangle) {
-			addNeighbourIfNotPresent(nodes, currentTriangle, SIDE_1);
-			addNeighbourIfNotPresent(nodes, currentTriangle, SIDE_2);
-			addNeighbourIfNotPresent(nodes, currentTriangle, SIDE_3);
+			for (final TriangleSide side : TRIANGLE_SIDES) {
+				addNeighbourIfNotPresent(nodes, currentTriangle, side);
+			}
 		}
 
 		private void addNeighbourIfNotPresent(HashSet<PolygonTriangle> nodes, PolygonTriangle currentTriangle, TriangleSide side) {
@@ -536,7 +537,8 @@ public class PolygonUtilImpl implements PolygonUtil {
 			final PolygonTriangle neighbourTriangle = triangle.getNeighbour(side);
 			if (finalGraph.containsKey(neighbourTriangle)) {
 				final PortalGraphNode neighbourNode = finalGraph.get(neighbourTriangle);
-				node.setNeighbour(side, neighbourNode);
+				final TriangleVertex rightVertex = matchingSide(side);
+				node.addEdge(new PortalGraphEdge(node, neighbourNode, triangle.getVertex(rightVertex.getIdForNextVertex()), triangle.getVertex(rightVertex)));
 				linkBackToNode(triangle, node, neighbourTriangle, neighbourNode);
 			}
 		}
@@ -545,7 +547,10 @@ public class PolygonUtilImpl implements PolygonUtil {
 				final PortalGraphNode neighbourNode) {
 			for (final TriangleSide neighbourSide : TriangleSide.values()) {
 				if (neighbourTriangle.getNeighbour(neighbourSide) == triangle) {
-					neighbourNode.setNeighbour(neighbourSide, node);
+					final TriangleVertex rightVertex = matchingSide(neighbourSide);
+					final PortalGraphEdge edge = new PortalGraphEdge(neighbourNode, node, neighbourTriangle.getVertex(rightVertex.getIdForNextVertex()),
+							neighbourTriangle.getVertex(rightVertex));
+					neighbourNode.addEdge(edge);
 					break;
 				}
 			}
@@ -566,9 +571,9 @@ public class PolygonUtilImpl implements PolygonUtil {
 		private void visitNode(final PortalGraphNode node, final Set<PortalGraphNode> visitedNodes) {
 			if (node != null && !visitedNodes.contains(node)) {
 				visitedNodes.add(node);
-				visitNode(node.getNeighbour(SIDE_1), visitedNodes);
-				visitNode(node.getNeighbour(SIDE_2), visitedNodes);
-				visitNode(node.getNeighbour(SIDE_3), visitedNodes);
+				for (final PortalGraphEdge edge : node.getEdges()) {
+					visitNode(edge.getDestination(), visitedNodes);
+				}
 			}
 		}
 	}
