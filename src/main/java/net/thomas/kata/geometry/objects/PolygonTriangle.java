@@ -27,7 +27,7 @@ public class PolygonTriangle {
 		public static final TriangleVertex[] TRIANGLE_VERTICES = TriangleVertex.values();
 
 		public static TriangleVertex matchingSide(TriangleSide sideId) {
-			return TriangleVertex.values()[sideId.ordinal()];
+			return TRIANGLE_VERTICES[sideId.ordinal()];
 		}
 
 		public static TriangleVertex getIdForNextVertex(final TriangleVertex vertexId) {
@@ -46,7 +46,7 @@ public class PolygonTriangle {
 		public static final TriangleSide[] TRIANGLE_SIDES = TriangleSide.values();
 
 		public static TriangleSide matchingVertex(TriangleVertex vertexId) {
-			return TriangleSide.values()[vertexId.ordinal()];
+			return TRIANGLE_SIDES[vertexId.ordinal()];
 		}
 	}
 

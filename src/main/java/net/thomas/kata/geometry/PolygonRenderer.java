@@ -26,8 +26,8 @@ import net.thomas.kata.geometry.objects.PolygonBuilder;
 import net.thomas.kata.geometry.objects.PolygonTriangle;
 import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex;
 import net.thomas.kata.geometry.objects.PolygonVertex;
-import net.thomas.kata.geometry.objects.PortalGraphEdge;
-import net.thomas.kata.geometry.objects.PortalGraphNode;
+import net.thomas.kata.geometry.objects.Portal;
+import net.thomas.kata.geometry.objects.PortalGraphNodeV2;
 
 public class PolygonRenderer extends JFrame implements KeyListener {
 	private static final long serialVersionUID = 1L;
@@ -69,7 +69,7 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 	private final Collection<PolygonVertex> monotonePolygons;
 	private final Collection<PolygonVertex> originalPolygons;
 	private final Collection<PolygonTriangle> triangleGraphs;
-	private final Collection<PortalGraphNode> portalGraphs;
+	private final Collection<PortalGraphNodeV2> portalGraphs;
 
 	private boolean renderOriginal;
 	private boolean renderMonotones;
@@ -89,7 +89,7 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		final Collection<PolygonTriangle> triangleGraphs = util.triangulateMonotonePolygons(monotonePolygons);
 		System.out.println("Time spend building initial triangle graphs: " + (System.nanoTime() - stamp) / 1000000.0 + " ms");
 		stamp = System.nanoTime();
-		final Collection<PortalGraphNode> portalGraphs = util.buildPortalGraphs(triangleGraphs);
+		final Collection<PortalGraphNodeV2> portalGraphs = util.buildPortalGraphs(triangleGraphs);
 		System.out.println("Time spend converting graphs: " + (System.nanoTime() - stamp) / 1000000.0 + " ms");
 		final PolygonRenderer renderer = new PolygonRenderer(polygons, monotonePolygons, triangleGraphs, portalGraphs);
 		renderer.setVisible(true);
@@ -122,11 +122,11 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 	}
 
 	public PolygonRenderer(Collection<PolygonVertex> originalPolygons, Collection<PolygonVertex> monotonePolygons, Collection<PolygonTriangle> triangleGraphs,
-			Collection<PortalGraphNode> portalGraphs) {
+			Collection<PortalGraphNodeV2> portalGraphs2) {
 		this.originalPolygons = originalPolygons;
 		this.monotonePolygons = monotonePolygons;
 		this.triangleGraphs = triangleGraphs;
-		this.portalGraphs = portalGraphs;
+		portalGraphs = portalGraphs2;
 		setLocation(500, 400);
 		setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -209,57 +209,31 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 
 	private void renderTriangleGraphs(Graphics2D graphics) {
 		renderNodes(graphics);
-		renderEdges(graphics);
 	}
 
 	private void renderNodes(Graphics2D graphics) {
-		final Set<PortalGraphNode> visitedNodes = new HashSet<>();
+		final Set<PortalGraphNodeV2> visitedNodes = new HashSet<>();
 		graphics.setColor(new Color(.6f, .6f, 0.6f, 1.0f));
-		for (final PortalGraphNode node : portalGraphs) {
+		for (final PortalGraphNodeV2 node : portalGraphs) {
 			renderNodes(node, visitedNodes, graphics);
 		}
 	}
 
-	private void renderEdges(Graphics2D graphics) {
-		final Set<PortalGraphNode> visitedNodes = new HashSet<>();
-		graphics.setColor(new Color(.3f, .3f, 0.3f, 1.0f));
-		graphics.setStroke(new BasicStroke(2.0f));
-		for (final PortalGraphNode node : portalGraphs) {
-			renderEdges(node, visitedNodes, graphics);
-		}
-	}
-
-	private void renderNodes(final PortalGraphNode node, final Set<PortalGraphNode> visitedNodes, Graphics2D graphics) {
+	private void renderNodes(final PortalGraphNodeV2 node, final Set<PortalGraphNodeV2> visitedNodes, Graphics2D graphics) {
 		if (!visitedNodes.contains(node)) {
 			visitedNodes.add(node);
-			drawCenter(node, graphics);
-			for (final PortalGraphEdge edge : node.getEdges()) {
-				renderNodes(edge.getDestination(), visitedNodes, graphics);
+			drawPortal(node.getPortal(), graphics);
+			for (final PortalGraphNodeV2 neighbour : node) {
+				renderNodes(neighbour, visitedNodes, graphics);
 			}
 		}
 	}
 
-	private void renderEdges(final PortalGraphNode node, final Set<PortalGraphNode> visitedNodes, Graphics2D graphics) {
-		if (!visitedNodes.contains(node)) {
-			visitedNodes.add(node);
-			for (final PortalGraphEdge edge : node.getEdges()) {
-				drawConnection(edge, graphics);
-				renderEdges(edge.getDestination(), visitedNodes, graphics);
-			}
-		}
-	}
-
-	private void drawConnection(PortalGraphEdge edge, Graphics2D graphics) {
-		final Point2D first = edge.getSource().getCenter();
-		final Point2D second = edge.getIntersectionWithPortal();
+	private void drawPortal(Portal portal, Graphics2D graphics) {
+		final Point2D first = portal.getP1();
+		final Point2D second = portal.getP2();
 		graphics.drawLine(translateXIntoFramespace(first.getX()), translateYIntoFramespace(first.getY()), translateXIntoFramespace(second.getX()),
 				translateYIntoFramespace(second.getY()));
-	}
-
-	private void drawCenter(PortalGraphNode node, Graphics2D graphics) {
-		final Point2D center = node.getCenter();
-		graphics.fillOval(translateXIntoFramespace(center.getX()) - POINT_DIAMETER / 2, translateYIntoFramespace(center.getY()) - POINT_DIAMETER / 2,
-				POINT_DIAMETER, POINT_DIAMETER);
 	}
 
 	private void renderVertices(final Graphics2D graphics) {

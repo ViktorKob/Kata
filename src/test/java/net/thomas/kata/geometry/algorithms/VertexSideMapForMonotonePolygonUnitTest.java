@@ -8,7 +8,6 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import net.thomas.kata.geometry.algorithms.PolygonUtilImpl.MonotonePolygonTriangulator.VertexSideMapForMonotonePolygon;
 import net.thomas.kata.geometry.objects.PolygonBuilder;
 import net.thomas.kata.geometry.objects.PolygonVertex;
 
