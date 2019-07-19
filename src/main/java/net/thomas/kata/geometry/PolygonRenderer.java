@@ -4,9 +4,6 @@ import static java.awt.AlphaComposite.SRC_OVER;
 import static java.util.Arrays.asList;
 import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide.matchingVertex;
 import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.TRIANGLE_VERTICES;
-import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.VERTEX_1;
-import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.VERTEX_2;
-import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.VERTEX_3;
 
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
@@ -29,7 +26,6 @@ import net.thomas.kata.geometry.objects.PolygonBuilder;
 import net.thomas.kata.geometry.objects.PolygonTriangle;
 import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex;
 import net.thomas.kata.geometry.objects.PolygonVertex;
-import net.thomas.kata.geometry.objects.Portal;
 import net.thomas.kata.geometry.objects.PortalGraphEdge;
 import net.thomas.kata.geometry.objects.PortalGraphNode;
 
@@ -302,9 +298,9 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 	}
 
 	private void drawEdges(final PolygonTriangle triangle, Graphics graphics, Set<PolygonTriangle> drawnTriangles) {
-		drawEdge(triangle.getVertex(VERTEX_1), triangle.getVertex(VERTEX_2), graphics);
-		drawEdge(triangle.getVertex(VERTEX_2), triangle.getVertex(VERTEX_3), graphics);
-		drawEdge(triangle.getVertex(VERTEX_3), triangle.getVertex(VERTEX_1), graphics);
+		for (final TriangleVertex vertex : TRIANGLE_VERTICES) {
+			drawEdge(triangle.getVertex(vertex), triangle.getVertex(vertex.next()), graphics);
+		}
 		drawnTriangles.add(triangle);
 		for (final TriangleVertex vertexId : TRIANGLE_VERTICES) {
 			final PolygonTriangle neighbour = triangle.getNeighbour(matchingVertex(vertexId));

@@ -34,7 +34,7 @@ public class PolygonTriangle {
 			return vertexId == VERTEX_3 ? VERTEX_1 : TRIANGLE_VERTICES[vertexId.ordinal() + 1];
 		}
 
-		public TriangleVertex getIdForNextVertex() {
+		public TriangleVertex next() {
 			return getIdForNextVertex(this);
 		}
 	}

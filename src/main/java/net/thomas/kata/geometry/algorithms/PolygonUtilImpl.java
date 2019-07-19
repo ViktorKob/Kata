@@ -538,7 +538,7 @@ public class PolygonUtilImpl implements PolygonUtil {
 			if (finalGraph.containsKey(neighbourTriangle)) {
 				final PortalGraphNode neighbourNode = finalGraph.get(neighbourTriangle);
 				final TriangleVertex rightVertex = matchingSide(side);
-				node.addEdge(new PortalGraphEdge(node, neighbourNode, triangle.getVertex(rightVertex.getIdForNextVertex()), triangle.getVertex(rightVertex)));
+				node.addEdge(new PortalGraphEdge(node, neighbourNode, triangle.getVertex(rightVertex.next()), triangle.getVertex(rightVertex)));
 				linkBackToNode(triangle, node, neighbourTriangle, neighbourNode);
 			}
 		}
@@ -548,7 +548,7 @@ public class PolygonUtilImpl implements PolygonUtil {
 			for (final TriangleSide neighbourSide : TriangleSide.values()) {
 				if (neighbourTriangle.getNeighbour(neighbourSide) == triangle) {
 					final TriangleVertex rightVertex = matchingSide(neighbourSide);
-					final PortalGraphEdge edge = new PortalGraphEdge(neighbourNode, node, neighbourTriangle.getVertex(rightVertex.getIdForNextVertex()),
+					final PortalGraphEdge edge = new PortalGraphEdge(neighbourNode, node, neighbourTriangle.getVertex(rightVertex.next()),
 							neighbourTriangle.getVertex(rightVertex));
 					neighbourNode.addEdge(edge);
 					break;
