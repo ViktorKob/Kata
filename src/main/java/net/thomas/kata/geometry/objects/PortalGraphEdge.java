@@ -1,14 +1,17 @@
 package net.thomas.kata.geometry.objects;
 
+import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 
-public class PortalGraphEdge {
+public class PortalGraphEdge extends Line2D.Double {
+	private static final long serialVersionUID = 1L;
 
 	private final PortalGraphNode source;
 	private final PortalGraphNode destination;
 	private final Portal portal;
 
 	public PortalGraphEdge(PortalGraphNode source, PortalGraphNode destination, Point2D portalBoundaryLeft, Point2D portalBoundaryRight) {
+		super(source.getCenter(), destination.getCenter());
 		this.source = source;
 		this.destination = destination;
 		portal = new Portal(portalBoundaryLeft, portalBoundaryRight);
