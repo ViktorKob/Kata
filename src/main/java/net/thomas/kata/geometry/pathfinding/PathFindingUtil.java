@@ -4,7 +4,6 @@ import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.util.Collections.emptySet;
 
-import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
 import java.util.Collection;
 import java.util.HashMap;
@@ -13,9 +12,13 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.Stack;
 import java.util.function.Function;
 
+import net.thomas.kata.geometry.pathfinding.PathFindingUtil.TrianglePosition;
+import net.thomas.kata.geometry.pathfinding.objects.Path;
 import net.thomas.kata.geometry.pathfinding.objects.PortalGraphNode;
 import net.thomas.kata.geometry.pathfinding.objects.Triangle;
 
@@ -40,25 +43,140 @@ public class PathFindingUtil {
 		return new DirtyIntervals(positions);
 	}
 
-	public GeneralPath buildPath(Point2D location, Point2D destination) {
-		final Triangle startTriangle = lookupTriangleAt(location);
-		final Triangle endTriangle = lookupTriangleAt(destination);
-		System.out.println(startTriangle);
-		System.out.println(endTriangle);
-		return null;
+	public Path buildPath(Point2D location, Point2D destination) {
+		return new PathfinderAlgorithm(location, destination).findPath();
 	}
 
-	private Triangle lookupTriangleAt(Point2D point) {
-		final Set<Triangle> trianglesAtX = intervalsX.activeTrianglesAt(point.getX());
-		final Set<Triangle> trianglesAtY = intervalsY.activeTrianglesAt(point.getY());
-		final HashSet<Triangle> candidates = new HashSet<>(trianglesAtX);
-		candidates.retainAll(trianglesAtY);
-		for (final Triangle triangle : candidates) {
-			if (triangle.contains(point)) {
-				return triangle;
+	class PathfinderAlgorithm {
+		private final Point2D origin;
+		private final Point2D destination;
+		private final Triangle startTriangle;
+		private final Triangle endTriangle;
+
+		public PathfinderAlgorithm(Point2D origin, Point2D destination) {
+			this.origin = origin;
+			this.destination = destination;
+			startTriangle = lookupTriangleAt(origin);
+			endTriangle = lookupTriangleAt(destination);
+		}
+
+		private Triangle lookupTriangleAt(Point2D point) {
+			final Set<Triangle> trianglesAtX = intervalsX.activeTrianglesAt(point.getX());
+			final Set<Triangle> trianglesAtY = intervalsY.activeTrianglesAt(point.getY());
+			final HashSet<Triangle> candidates = new HashSet<>(trianglesAtX);
+			candidates.retainAll(trianglesAtY);
+			for (final Triangle triangle : candidates) {
+				if (triangle.contains(point)) {
+					return triangle;
+				}
+			}
+			return null;
+		}
+
+		public Path findPath() {
+			if (startTriangle != null && endTriangle != null) {
+				if (startTriangle.equals(endTriangle)) {
+					return new Path(origin, destination);
+				} else {
+					return traverseGraphToDetermineBestPath();
+				}
+			} else {
+				return null;
 			}
 		}
-		return null;
+
+		private Path traverseGraphToDetermineBestPath() {
+			final PriorityQueue<Step> candidateSteps = prepareInitialCandidates(triangles2Portals.get(startTriangle));
+			final Step finalStep = determinePath(candidateSteps, triangles2Portals.get(endTriangle));
+			if (finalStep != null) {
+				final Stack<Step> stepsInOrder = reverseOrderOfSteps(finalStep);
+				return buildPathShape(stepsInOrder);
+			} else {
+				return null;
+			}
+		}
+
+		private PriorityQueue<Step> prepareInitialCandidates(final Collection<PortalGraphNode> startNodes) {
+			final PriorityQueue<Step> candidateSteps = new PriorityQueue<>();
+			for (final PortalGraphNode node : startNodes) {
+				candidateSteps.add(buildStep(null, node));
+			}
+			return candidateSteps;
+		}
+
+		private Step determinePath(final PriorityQueue<Step> candidateSteps, final Collection<PortalGraphNode> endNodes) {
+			Step finalStep = null;
+			final Set<PortalGraphNode> visitedNodes = new HashSet<>();
+			while (!candidateSteps.isEmpty()) {
+				final Step currentStep = candidateSteps.poll();
+				visitedNodes.add(currentStep.node);
+				for (final PortalGraphNode neighbour : currentStep.node) {
+					if (!visitedNodes.contains(neighbour)) {
+						final Step nextStep = buildStep(currentStep, neighbour);
+						if (endNodes.contains(currentStep.node)) {
+							finalStep = nextStep;
+							candidateSteps.clear();
+						} else {
+							candidateSteps.add(nextStep);
+						}
+					}
+				}
+			}
+			return finalStep;
+		}
+
+		private Stack<Step> reverseOrderOfSteps(final Step finalStep) {
+			Step current = finalStep;
+			final Stack<Step> stepsInOrder = new Stack<>();
+			while (current != null) {
+				stepsInOrder.add(current);
+				current = current.previousStep;
+			}
+			return stepsInOrder;
+		}
+
+		private Path buildPathShape(final Stack<Step> stepsInOrder) {
+			final Path path = new Path(origin, destination);
+			for (final Step step : stepsInOrder) {
+				path.addPortal(step.node.getPortal());
+			}
+			return path;
+		}
+
+		private Step buildStep(Step previousStep, PortalGraphNode node) {
+			double distanceTravelled = 0.0;
+			if (previousStep != null) {
+				distanceTravelled += previousStep.squaredDistanceTravelled;
+				distanceTravelled += node.getPortal().getCenter().distanceSq(previousStep.node.getCenterOfPortal());
+			} else {
+				distanceTravelled += node.getPortal().getCenter().distanceSq(origin);
+			}
+			final double remainingDistance = node.getCenterOfPortal().distanceSq(destination);
+			return new Step(distanceTravelled, remainingDistance, node, previousStep);
+		}
+
+		class Step implements Comparable<Step> {
+			public final double squaredDistanceTravelled;
+			public final double estimatedSquaredDistanceRemaining;
+			public final PortalGraphNode node;
+			public final Step previousStep;
+
+			public Step(double squaredDistanceTravelled, double estimatedSquaredDistanceRemaining, PortalGraphNode node, Step previousStep) {
+				this.squaredDistanceTravelled = squaredDistanceTravelled;
+				this.estimatedSquaredDistanceRemaining = estimatedSquaredDistanceRemaining;
+				this.node = node;
+				this.previousStep = previousStep;
+			}
+
+			public double getPriceOfRoute() {
+				return squaredDistanceTravelled + estimatedSquaredDistanceRemaining;
+			}
+
+			@Override
+			public int compareTo(Step other) {
+				return Double.compare(getPriceOfRoute(), other.getPriceOfRoute());
+			}
+		}
 	}
 
 	/***
@@ -85,36 +203,36 @@ public class PathFindingUtil {
 			return new PathFindingUtil(triangles2Portals);
 		}
 	}
-}
 
-class TrianglePosition implements Comparable<TrianglePosition> {
-	public final Triangle triangle;
-	public final double position;
-	public final boolean isStartPosition;
+	class TrianglePosition implements Comparable<TrianglePosition> {
+		public final Triangle triangle;
+		public final double position;
+		public final boolean isStartPosition;
 
-	public TrianglePosition(Triangle triangle, Function<Point2D, Double> fetchFunction, boolean isStartPosition) {
-		this.triangle = triangle;
-		this.isStartPosition = isStartPosition;
-		final double value1 = fetchFunction.apply(triangle.getP1());
-		final double value2 = fetchFunction.apply(triangle.getP2());
-		final double value3 = fetchFunction.apply(triangle.getP3());
-		if (isStartPosition) {
-			position = min(value1, min(value2, value3));
-		} else {
-			position = max(value1, max(value2, value3));
+		public TrianglePosition(Triangle triangle, Function<Point2D, Double> fetchFunction, boolean isStartPosition) {
+			this.triangle = triangle;
+			this.isStartPosition = isStartPosition;
+			final double value1 = fetchFunction.apply(triangle.getP1());
+			final double value2 = fetchFunction.apply(triangle.getP2());
+			final double value3 = fetchFunction.apply(triangle.getP3());
+			if (isStartPosition) {
+				position = min(value1, min(value2, value3));
+			} else {
+				position = max(value1, max(value2, value3));
+			}
 		}
-	}
 
-	@Override
-	public int compareTo(TrianglePosition other) {
-		return Double.compare(position, other.position);
-	}
+		@Override
+		public int compareTo(TrianglePosition other) {
+			return Double.compare(position, other.position);
+		}
 
-	@Override
-	public String toString() {
-		return position + ": " + triangle;
-	}
+		@Override
+		public String toString() {
+			return position + ": " + triangle;
+		}
 
+	}
 }
 
 /***

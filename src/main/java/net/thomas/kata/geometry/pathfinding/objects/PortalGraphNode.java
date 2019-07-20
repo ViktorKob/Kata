@@ -1,5 +1,6 @@
 package net.thomas.kata.geometry.pathfinding.objects;
 
+import java.awt.geom.Point2D;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -20,6 +21,10 @@ public class PortalGraphNode implements Iterable<PortalGraphNode> {
 
 	public Portal getPortal() {
 		return portal;
+	}
+
+	public Point2D getCenterOfPortal() {
+		return portal.getCenter();
 	}
 
 	@Override

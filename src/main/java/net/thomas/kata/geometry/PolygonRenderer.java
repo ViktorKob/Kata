@@ -1,6 +1,7 @@
 package net.thomas.kata.geometry;
 
 import static java.awt.AlphaComposite.SRC_OVER;
+import static java.lang.System.nanoTime;
 import static java.util.Arrays.asList;
 import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide.matchingVertex;
 import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.TRIANGLE_VERTICES;
@@ -32,6 +33,7 @@ import net.thomas.kata.geometry.objects.PolygonTriangle;
 import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex;
 import net.thomas.kata.geometry.objects.PolygonVertex;
 import net.thomas.kata.geometry.pathfinding.PathFindingUtil;
+import net.thomas.kata.geometry.pathfinding.objects.Path;
 import net.thomas.kata.geometry.pathfinding.objects.Portal;
 import net.thomas.kata.geometry.pathfinding.objects.PortalGraphNode;
 import net.thomas.kata.geometry.pathfinding.objects.Triangle;
@@ -78,11 +80,14 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 	private final Collection<PolygonTriangle> triangleGraphs;
 	private final PathFindingUtil pathFindingUtil;
 
+	private final List<Path> paths;
+
 	private boolean renderOriginal;
 	private boolean renderMonotones;
 	private boolean renderTriangles;
 	private boolean renderTriangleGraph;
 	private boolean renderVertices;
+	private boolean renderPaths;
 
 	public static void main(String[] args) {
 		final PolygonUtil util = new PolygonUtilImpl();
@@ -97,7 +102,7 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		System.out.println("Time spend building initial triangle graphs: " + (System.nanoTime() - stamp) / 1000000.0 + " ms");
 		stamp = System.nanoTime();
 		final PathFindingUtil pathFindingUtil = util.buildPathFindingUtil(triangleGraphs);
-		System.out.println("Time spend building Path Finder Util: " + (System.nanoTime() - stamp) / 1000000.0 + " ms");
+		System.out.println("Time spend building Pathfinder Util: " + (System.nanoTime() - stamp) / 1000000.0 + " ms");
 		final PolygonRenderer renderer = new PolygonRenderer(polygons, monotonePolygons, triangleGraphs, pathFindingUtil);
 		renderer.setVisible(true);
 	}
@@ -134,12 +139,13 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		this.monotonePolygons = monotonePolygons;
 		this.triangleGraphs = triangleGraphs;
 		this.pathFindingUtil = pathFindingUtil;
+		paths = new LinkedList<>();
 		setLocation(500, 400);
 		setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		addKeyListener(this);
 		addMouseListener(new PathDefinitionListener());
-		renderOriginal = renderMonotones = renderTriangles = renderTriangleGraph = renderVertices = true;
+		renderOriginal = renderMonotones = renderTriangles = renderTriangleGraph = renderVertices = renderPaths = true;
 	}
 
 	@Override
@@ -187,8 +193,16 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 			graphics.setColor(new Color(.5f, .0f, .0f, 1.0f));
 			graphics.drawString("Vertices (5)", 10, 120);
 		}
+		if (renderPaths) {
+			renderPaths(graphics);
+			graphics.setColor(new Color(.0f, .5f, .0f, 1.0f));
+			graphics.drawString("Paths (6)", 10, 140);
+		} else {
+			graphics.setColor(new Color(.5f, .0f, .0f, 1.0f));
+			graphics.drawString("Paths (6)", 10, 140);
+		}
 		graphics.setColor(new Color(.0f, .0f, .0f, 1.0f));
-		graphics.drawString("(Esc) to exit", 10, 140);
+		graphics.drawString("(Esc) to exit", 10, 160);
 	}
 
 	private void renderTriangles(final Graphics2D graphics) {
@@ -240,6 +254,22 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		graphics.setColor(new Color(.0f, .0f, .0f, 1.0f));
 		for (final PolygonVertex polygon : monotonePolygons) {
 			drawVertices(polygon, graphics);
+		}
+	}
+
+	private void renderPaths(Graphics2D graphics) {
+		graphics.setColor(new Color(.6f, 0.8f, .0f, 1.0f));
+		for (final Path path : paths) {
+			Point2D previous = path.origin;
+			for (final Portal portal : path.route) {
+				final Point2D next = portal.getCenter();
+				graphics.drawLine(translateXIntoFramespace(previous.getX()), translateYIntoFramespace(previous.getY()), translateXIntoFramespace(next.getX()),
+						translateYIntoFramespace(next.getY()));
+				previous = next;
+			}
+			final Point2D next = path.destination;
+			graphics.drawLine(translateXIntoFramespace(previous.getX()), translateYIntoFramespace(previous.getY()), translateXIntoFramespace(next.getX()),
+					translateYIntoFramespace(next.getY()));
 		}
 	}
 
@@ -325,6 +355,8 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 			renderTriangleGraph = !renderTriangleGraph;
 		} else if (e.getKeyChar() == '5') {
 			renderVertices = !renderVertices;
+		} else if (e.getKeyChar() == '6') {
+			renderPaths = !renderPaths;
 		} else if (e.getKeyChar() == KeyEvent.VK_ESCAPE) {
 			System.exit(0);
 		}
@@ -332,11 +364,10 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 	}
 
 	private class PathDefinitionListener extends MouseAdapter {
-		private final Point2D startLocation;
 		private Point2D.Double clickLocationInWorld;
 
 		public PathDefinitionListener() {
-			startLocation = null;
+			clickLocationInWorld = null;
 		}
 
 		@Override
@@ -347,11 +378,19 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 
 		@Override
 		public void mouseReleased(MouseEvent e) {
+			final long stamp = nanoTime();
 			final Point location = e.getPoint();
 			final Double releaseLocationInWorld = new Point2D.Double(translateXIntoWorldspace(location.x), translateYIntoWorldspace(location.y));
+			boolean success = false;
 			if (clickLocationInWorld != null) {
-				pathFindingUtil.buildPath(clickLocationInWorld, releaseLocationInWorld);
+				final Path path = pathFindingUtil.buildPath(clickLocationInWorld, releaseLocationInWorld);
+				if (path != null) {
+					paths.add(path);
+					repaint();
+					success = true;
+				}
 			}
+			System.out.println("Time spend " + (success ? "building" : "failing to build") + " Path: " + (System.nanoTime() - stamp) / 1000000.0 + " ms");
 		}
 	}
 }

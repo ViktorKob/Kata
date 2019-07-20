@@ -1,5 +1,7 @@
 package net.thomas.kata.geometry.pathfinding.objects;
 
+import static java.lang.Double.NaN;
+
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 
@@ -19,8 +21,15 @@ public class Portal extends Line2D.Double {
 		return t >= 0 && t < 1;
 	}
 
-	public Point2D getBestIntersectionPoint(final Line2D.Double other) {
-		final double t = determineT(x1, x2, other.x1, other.x2, y1, y2, other.y1, other.y2);
+	public Point2D getBestIntersectionPoint(final Line2D o) {
+		double t = NaN;
+		if (o instanceof Line2D.Double) {
+			final Line2D.Double other = (Line2D.Double) o;
+			t = determineT(x1, x2, other.x1, other.x2, y1, y2, other.y1, other.y2);
+		} else if (o instanceof Line2D.Float) {
+			final Line2D.Float other = (Line2D.Float) o;
+			t = determineT(x1, x2, other.x1, other.x2, y1, y2, other.y1, other.y2);
+		}
 		if (t < 0) {
 			return getP1();
 		} else if (t > 1) {
