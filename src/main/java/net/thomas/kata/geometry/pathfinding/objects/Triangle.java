@@ -18,6 +18,18 @@ public class Triangle {
 		trianglePath = buildTrianglePath(p1, p2, p3);
 	}
 
+	public Point2D getP1() {
+		return p1;
+	}
+
+	public Point2D getP2() {
+		return p2;
+	}
+
+	public Point2D getP3() {
+		return p3;
+	}
+
 	private GeneralPath buildTrianglePath(Point2D p1, Point2D p2, Point2D p3) {
 		final GeneralPath trianglePath = new GeneralPath(WIND_NON_ZERO, 3);
 		trianglePath.moveTo(p1.getX(), p1.getY());
@@ -75,5 +87,10 @@ public class Triangle {
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "[" + p1 + ", " + p2 + ", " + p3 + "]";
 	}
 }
