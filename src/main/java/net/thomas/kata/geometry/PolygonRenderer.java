@@ -10,9 +10,13 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -134,6 +138,7 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		addKeyListener(this);
+		addMouseListener(new PathDefinitionListener());
 		renderOriginal = renderMonotones = renderTriangles = renderTriangleGraph = renderVertices = true;
 	}
 
@@ -292,6 +297,14 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		return SCREEN_HEIGHT - (int) (value * ZOOM_FACTOR + DISPLACEMENT);
 	}
 
+	private double translateXIntoWorldspace(int value) {
+		return (value - DISPLACEMENT) / ZOOM_FACTOR;
+	}
+
+	private double translateYIntoWorldspace(int value) {
+		return (SCREEN_HEIGHT - value - DISPLACEMENT) / ZOOM_FACTOR;
+	}
+
 	@Override
 	public void keyTyped(KeyEvent e) {
 	}
@@ -316,5 +329,29 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 			System.exit(0);
 		}
 		repaint();
+	}
+
+	private class PathDefinitionListener extends MouseAdapter {
+		private final Point2D startLocation;
+		private Point2D.Double clickLocationInWorld;
+
+		public PathDefinitionListener() {
+			startLocation = null;
+		}
+
+		@Override
+		public void mousePressed(MouseEvent e) {
+			final Point location = e.getPoint();
+			clickLocationInWorld = new Point2D.Double(translateXIntoWorldspace(location.x), translateYIntoWorldspace(location.y));
+		}
+
+		@Override
+		public void mouseReleased(MouseEvent e) {
+			final Point location = e.getPoint();
+			final Double releaseLocationInWorld = new Point2D.Double(translateXIntoWorldspace(location.x), translateYIntoWorldspace(location.y));
+			if (clickLocationInWorld != null) {
+				pathFindingUtil.buildPath(clickLocationInWorld, releaseLocationInWorld);
+			}
+		}
 	}
 }

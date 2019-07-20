@@ -2,6 +2,7 @@ package net.thomas.kata.geometry.pathfinding;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
+import static java.util.Collections.emptySet;
 
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
@@ -42,6 +43,8 @@ public class PathFindingUtil {
 	public GeneralPath buildPath(Point2D location, Point2D destination) {
 		final Triangle startTriangle = lookupTriangleAt(location);
 		final Triangle endTriangle = lookupTriangleAt(destination);
+		System.out.println(startTriangle);
+		System.out.println(endTriangle);
 		return null;
 	}
 
@@ -50,7 +53,11 @@ public class PathFindingUtil {
 		final Set<Triangle> trianglesAtY = intervalsY.activeTrianglesAt(point.getY());
 		final HashSet<Triangle> candidates = new HashSet<>(trianglesAtX);
 		candidates.retainAll(trianglesAtY);
-		System.out.println(candidates);
+		for (final Triangle triangle : candidates) {
+			if (triangle.contains(point)) {
+				return triangle;
+			}
+		}
 		return null;
 	}
 
@@ -138,8 +145,12 @@ class DirtyIntervals {
 		do {
 			correctInterval = nextInterval;
 			nextInterval = iterator.next();
-		} while (position > nextInterval.startPosition);
-		return correctInterval.activeTriangles;
+		} while (position >= nextInterval.startPosition);
+		if (correctInterval != null) {
+			return correctInterval.activeTriangles;
+		} else {
+			return emptySet();
+		}
 	}
 }
 
