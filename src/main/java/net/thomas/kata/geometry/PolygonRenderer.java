@@ -44,7 +44,7 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 	private static final int SCREEN_HEIGHT = 400;
 	private static final int SCREEN_WIDTH = 1800;
 	private static final int POINT_DIAMETER = 15;
-	private static final int ZOOM_FACTOR = 10;
+	private static final double ZOOM_FACTOR = 10.0;
 	private static final int NEIGHBOUR_OFFSET = 30;
 	private static final int DISPLACEMENT = 200;
 
