@@ -2,14 +2,14 @@ package net.thomas.kata.geometry.pathfinding.objects;
 
 import static java.awt.geom.Path2D.WIND_NON_ZERO;
 
-import java.awt.geom.GeneralPath;
+import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 
 public class Triangle {
 	private final Point2D p1;
 	private final Point2D p2;
 	private final Point2D p3;
-	private final GeneralPath trianglePath;
+	private final Path2D trianglePath;
 
 	public Triangle(Point2D p1, Point2D p2, Point2D p3) {
 		this.p1 = p1;
@@ -30,8 +30,8 @@ public class Triangle {
 		return p3;
 	}
 
-	private GeneralPath buildTrianglePath(Point2D p1, Point2D p2, Point2D p3) {
-		final GeneralPath trianglePath = new GeneralPath(WIND_NON_ZERO, 3);
+	private Path2D buildTrianglePath(Point2D p1, Point2D p2, Point2D p3) {
+		final Path2D trianglePath = new Path2D.Double(WIND_NON_ZERO, 3);
 		trianglePath.moveTo(p1.getX(), p1.getY());
 		trianglePath.lineTo(p2.getX(), p2.getY());
 		trianglePath.lineTo(p3.getX(), p3.getY());

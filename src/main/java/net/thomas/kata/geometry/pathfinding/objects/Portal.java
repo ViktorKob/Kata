@@ -17,19 +17,35 @@ public class Portal extends Line2D.Double {
 	}
 
 	public boolean isInsidePortal(Line2D.Double other) {
-		final double t = determineT(x1, x2, other.x1, other.x2, y1, y2, other.y1, other.y2);
+		final double t = determineTFromTwoLines(x1, x2, other.x1, other.x2, y1, y2, other.y1, other.y2);
 		return t >= 0 && t < 1;
+	}
+
+	public Point2D calculatePointClosestTo(Point2D target) {
+		double t = NaN;
+		if (target instanceof Point2D.Double) {
+			final Point2D.Double other = (Point2D.Double) target;
+			t = determineTFromTwoLines(x1, x2, other.x, other.x, y1, y2, other.y, other.y);
+		} else if (target instanceof Point2D.Float) {
+			final Point2D.Float other = (Point2D.Float) target;
+			t = determineTFromTwoLines(x1, x2, other.x, other.x, y1, y2, other.y, other.y);
+		}
+		return calculatePointFromT(t);
 	}
 
 	public Point2D getBestIntersectionPoint(final Line2D o) {
 		double t = NaN;
 		if (o instanceof Line2D.Double) {
 			final Line2D.Double other = (Line2D.Double) o;
-			t = determineT(x1, x2, other.x1, other.x2, y1, y2, other.y1, other.y2);
+			t = determineTFromTwoLines(x1, x2, other.x1, other.x2, y1, y2, other.y1, other.y2);
 		} else if (o instanceof Line2D.Float) {
 			final Line2D.Float other = (Line2D.Float) o;
-			t = determineT(x1, x2, other.x1, other.x2, y1, y2, other.y1, other.y2);
+			t = determineTFromTwoLines(x1, x2, other.x1, other.x2, y1, y2, other.y1, other.y2);
 		}
+		return calculatePointFromT(t);
+	}
+
+	private Point2D calculatePointFromT(double t) {
 		if (t < 0) {
 			return getP1();
 		} else if (t > 1) {
@@ -41,7 +57,12 @@ public class Portal extends Line2D.Double {
 		}
 	}
 
-	private double determineT(double x1, double x2, double x3, double x4, double y1, double y2, double y3, double y4) {
+	// TODO[Thomas]: implement
+	private double determineTFromPointAndLine(double x1, double x2, double x, double y1, double y2, double y) {
+		return ((x1 - x) * (y - y) - (y1 - y) * (x - x)) / ((x1 - x2) * (y - y) - (y1 - y2) * (x - x));
+	}
+
+	private double determineTFromTwoLines(double x1, double x2, double x3, double x4, double y1, double y2, double y3, double y4) {
 		return ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
 	}
 
@@ -76,6 +97,6 @@ public class Portal extends Line2D.Double {
 
 	@Override
 	public String toString() {
-		return getP1() + " <-> " + getP2();
+		return "|" + getP1() + " <-> " + getP2() + "|";
 	}
 }

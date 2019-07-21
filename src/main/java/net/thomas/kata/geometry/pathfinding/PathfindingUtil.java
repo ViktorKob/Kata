@@ -17,17 +17,17 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.function.Function;
 
-import net.thomas.kata.geometry.pathfinding.PathFindingUtil.TrianglePosition;
+import net.thomas.kata.geometry.pathfinding.PathfindingUtil.TrianglePosition;
 import net.thomas.kata.geometry.pathfinding.objects.Path;
 import net.thomas.kata.geometry.pathfinding.objects.PortalGraphNode;
 import net.thomas.kata.geometry.pathfinding.objects.Triangle;
 
-public class PathFindingUtil {
+public class PathfindingUtil {
 	private final Map<Triangle, Collection<PortalGraphNode>> triangles2Portals;
 	private final DirtyIntervals intervalsX;
 	private final DirtyIntervals intervalsY;
 
-	public PathFindingUtil(Map<Triangle, Collection<PortalGraphNode>> triangles2Portals) {
+	public PathfindingUtil(Map<Triangle, Collection<PortalGraphNode>> triangles2Portals) {
 		this.triangles2Portals = triangles2Portals;
 		intervalsX = buildSegmentTree(triangles2Portals.keySet(), Point2D::getX);
 		intervalsY = buildSegmentTree(triangles2Portals.keySet(), Point2D::getY);
@@ -86,8 +86,10 @@ public class PathFindingUtil {
 		}
 
 		private Path traverseGraphToDetermineBestPath() {
-			final PriorityQueue<Step> candidateSteps = prepareInitialCandidates(triangles2Portals.get(startTriangle));
-			final Step finalStep = determinePath(candidateSteps, triangles2Portals.get(endTriangle));
+			final Set<PortalGraphNode> visitedNodes = new HashSet<>();
+			final PriorityQueue<Step> candidateSteps = prepareInitialCandidates(triangles2Portals.get(startTriangle), visitedNodes);
+			final Collection<PortalGraphNode> endNodes = triangles2Portals.get(endTriangle);
+			final Step finalStep = determinePath(candidateSteps, visitedNodes, endNodes);
 			if (finalStep != null) {
 				final Stack<Step> stepsInOrder = reverseOrderOfSteps(finalStep);
 				return buildPathShape(stepsInOrder);
@@ -96,28 +98,28 @@ public class PathFindingUtil {
 			}
 		}
 
-		private PriorityQueue<Step> prepareInitialCandidates(final Collection<PortalGraphNode> startNodes) {
+		private PriorityQueue<Step> prepareInitialCandidates(final Collection<PortalGraphNode> startNodes, Set<PortalGraphNode> visitedNodes) {
 			final PriorityQueue<Step> candidateSteps = new PriorityQueue<>();
 			for (final PortalGraphNode node : startNodes) {
+				visitedNodes.add(node);
 				candidateSteps.add(buildStep(null, node));
 			}
 			return candidateSteps;
 		}
 
-		private Step determinePath(final PriorityQueue<Step> candidateSteps, final Collection<PortalGraphNode> endNodes) {
+		private Step determinePath(final PriorityQueue<Step> candidateSteps, Set<PortalGraphNode> visitedNodes, final Collection<PortalGraphNode> endNodes) {
 			Step finalStep = null;
-			final Set<PortalGraphNode> visitedNodes = new HashSet<>();
 			while (!candidateSteps.isEmpty()) {
 				final Step currentStep = candidateSteps.poll();
-				visitedNodes.add(currentStep.node);
-				for (final PortalGraphNode neighbour : currentStep.node) {
-					if (!visitedNodes.contains(neighbour)) {
-						final Step nextStep = buildStep(currentStep, neighbour);
-						if (endNodes.contains(currentStep.node)) {
-							finalStep = nextStep;
-							candidateSteps.clear();
-						} else {
-							candidateSteps.add(nextStep);
+				System.out.println(currentStep.squaredDistanceTravelled + " -> " + currentStep.estimatedSquaredDistanceRemaining);
+				if (endNodes.contains(currentStep.node)) {
+					finalStep = currentStep;
+					break;
+				} else {
+					for (final PortalGraphNode neighbour : currentStep.node) {
+						if (!visitedNodes.contains(neighbour)) {
+							visitedNodes.add(neighbour);
+							candidateSteps.add(buildStep(currentStep, neighbour));
 						}
 					}
 				}
@@ -129,7 +131,7 @@ public class PathFindingUtil {
 			Step current = finalStep;
 			final Stack<Step> stepsInOrder = new Stack<>();
 			while (current != null) {
-				stepsInOrder.add(current);
+				stepsInOrder.push(current);
 				current = current.previousStep;
 			}
 			return stepsInOrder;
@@ -137,7 +139,8 @@ public class PathFindingUtil {
 
 		private Path buildPathShape(final Stack<Step> stepsInOrder) {
 			final Path path = new Path(origin, destination);
-			for (final Step step : stepsInOrder) {
+			while (!stepsInOrder.isEmpty()) {
+				final Step step = stepsInOrder.pop();
 				path.addPortal(step.node.getPortal());
 			}
 			return path;
@@ -147,6 +150,7 @@ public class PathFindingUtil {
 			double distanceTravelled = 0.0;
 			if (previousStep != null) {
 				distanceTravelled += previousStep.squaredDistanceTravelled;
+				// final Point2D closestPoint = node.getPortal().calculatePointClosestTo(destination);
 				distanceTravelled += node.getPortal().getCenter().distanceSq(previousStep.node.getCenterOfPortal());
 			} else {
 				distanceTravelled += node.getPortal().getCenter().distanceSq(origin);
@@ -176,6 +180,11 @@ public class PathFindingUtil {
 			public int compareTo(Step other) {
 				return Double.compare(getPriceOfRoute(), other.getPriceOfRoute());
 			}
+
+			@Override
+			public String toString() {
+				return getPriceOfRoute() + " to go through " + node;
+			}
 		}
 	}
 
@@ -199,8 +208,8 @@ public class PathFindingUtil {
 			return this;
 		}
 
-		public PathFindingUtil build() {
-			return new PathFindingUtil(triangles2Portals);
+		public PathfindingUtil build() {
+			return new PathfindingUtil(triangles2Portals);
 		}
 	}
 

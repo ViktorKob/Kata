@@ -32,7 +32,7 @@ import net.thomas.kata.geometry.objects.PolygonBuilder;
 import net.thomas.kata.geometry.objects.PolygonTriangle;
 import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex;
 import net.thomas.kata.geometry.objects.PolygonVertex;
-import net.thomas.kata.geometry.pathfinding.PathFindingUtil;
+import net.thomas.kata.geometry.pathfinding.PathfindingUtil;
 import net.thomas.kata.geometry.pathfinding.objects.Path;
 import net.thomas.kata.geometry.pathfinding.objects.Portal;
 import net.thomas.kata.geometry.pathfinding.objects.PortalGraphNode;
@@ -78,7 +78,7 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 	private final Collection<PolygonVertex> monotonePolygons;
 	private final Collection<PolygonVertex> originalPolygons;
 	private final Collection<PolygonTriangle> triangleGraphs;
-	private final PathFindingUtil pathFindingUtil;
+	private final PathfindingUtil pathFindingUtil;
 
 	private final List<Path> paths;
 
@@ -101,7 +101,7 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		final Collection<PolygonTriangle> triangleGraphs = util.triangulateMonotonePolygons(monotonePolygons);
 		System.out.println("Time spend building initial triangle graphs: " + (System.nanoTime() - stamp) / 1000000.0 + " ms");
 		stamp = System.nanoTime();
-		final PathFindingUtil pathFindingUtil = util.buildPathFindingUtil(triangleGraphs);
+		final PathfindingUtil pathFindingUtil = util.buildPathFindingUtil(triangleGraphs);
 		System.out.println("Time spend building Pathfinder Util: " + (System.nanoTime() - stamp) / 1000000.0 + " ms");
 		final PolygonRenderer renderer = new PolygonRenderer(polygons, monotonePolygons, triangleGraphs, pathFindingUtil);
 		renderer.setVisible(true);
@@ -134,7 +134,7 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 	}
 
 	public PolygonRenderer(Collection<PolygonVertex> originalPolygons, Collection<PolygonVertex> monotonePolygons, Collection<PolygonTriangle> triangleGraphs,
-			PathFindingUtil pathFindingUtil) {
+			PathfindingUtil pathFindingUtil) {
 		this.originalPolygons = originalPolygons;
 		this.monotonePolygons = monotonePolygons;
 		this.triangleGraphs = triangleGraphs;
@@ -202,6 +202,7 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 			graphics.drawString("Paths (6)", 10, 140);
 		}
 		graphics.setColor(new Color(.0f, .0f, .0f, 1.0f));
+		graphics.drawString("Drag from triangle to triangle to create path", 300, 40);
 		graphics.drawString("(Esc) to exit", 10, 160);
 	}
 

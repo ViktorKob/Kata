@@ -36,8 +36,8 @@ import net.thomas.kata.geometry.objects.PolygonTriangle;
 import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide;
 import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex;
 import net.thomas.kata.geometry.objects.PolygonVertex;
-import net.thomas.kata.geometry.pathfinding.PathFindingUtil;
-import net.thomas.kata.geometry.pathfinding.PathFindingUtil.Builder;
+import net.thomas.kata.geometry.pathfinding.PathfindingUtil;
+import net.thomas.kata.geometry.pathfinding.PathfindingUtil.Builder;
 import net.thomas.kata.geometry.pathfinding.objects.Portal;
 import net.thomas.kata.geometry.pathfinding.objects.PortalGraphNode;
 import net.thomas.kata.geometry.pathfinding.objects.Triangle;
@@ -56,7 +56,7 @@ public class PolygonUtilImpl implements PolygonUtil {
 	}
 
 	@Override
-	public PathFindingUtil buildPathFindingUtil(Collection<PolygonTriangle> triangleGraphs) {
+	public PathfindingUtil buildPathFindingUtil(Collection<PolygonTriangle> triangleGraphs) {
 		return new TriangleGraphConverter(triangleGraphs).buildPathFindingUtil();
 	}
 
@@ -371,7 +371,7 @@ public class PolygonUtilImpl implements PolygonUtil {
 			this.intermediateTriangleGraphs = intermediateTriangleGraphs;
 		}
 
-		public PathFindingUtil buildPathFindingUtil() {
+		public PathfindingUtil buildPathFindingUtil() {
 			connectAllAdjacentTriangles(intermediateTriangleGraphs);
 			final HashSet<PolygonTriangle> pendingNodes = extractAllUniqueTriangles(intermediateTriangleGraphs);
 			return convertToPathFindingUtil(pendingNodes);
@@ -465,10 +465,10 @@ public class PolygonUtilImpl implements PolygonUtil {
 			}
 		}
 
-		private PathFindingUtil convertToPathFindingUtil(final HashSet<PolygonTriangle> pendingNodes) {
+		private PathfindingUtil convertToPathFindingUtil(final HashSet<PolygonTriangle> pendingNodes) {
 			final Map<Portal, PortalGraphNode> portalGraphs = new HashMap<>();
 			final Set<PolygonTriangle> visitedTriangles = new HashSet<>();
-			final Builder builder = new PathFindingUtil.Builder();
+			final Builder builder = new PathfindingUtil.Builder();
 			for (final PolygonTriangle triangle : pendingNodes) {
 				convertNodeWithNeighbours(triangle, portalGraphs, visitedTriangles, builder);
 			}
