@@ -89,9 +89,6 @@ public class PathfindingUtil {
 			final Set<PortalGraphNode> visitedNodes = new HashSet<>();
 			final PriorityQueue<Step> candidateSteps = prepareInitialCandidates(triangles2Portals.get(startTriangle), visitedNodes);
 			final Collection<PortalGraphNode> endNodes = triangles2Portals.get(endTriangle);
-			if (endNodes == null) {
-				return null;
-			}
 			final Step finalStep = determinePath(candidateSteps, visitedNodes, endNodes);
 			if (finalStep != null) {
 				final Stack<Step> stepsInOrder = reverseOrderOfSteps(finalStep);
