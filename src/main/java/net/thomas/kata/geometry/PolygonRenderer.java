@@ -16,6 +16,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Point2D.Double;
 import java.util.Collection;
@@ -261,9 +262,10 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 	private void renderPaths(Graphics2D graphics) {
 		graphics.setColor(new Color(.6f, 0.8f, .0f, 1.0f));
 		for (final Path path : paths) {
+			final Line2D centerLine = new Line2D.Double(path.origin, path.destination);
 			Point2D previous = path.origin;
 			for (final Portal portal : path.route) {
-				final Point2D next = portal.getCenter();
+				final Point2D next = portal.getBestIntersectionPoint(centerLine);
 				graphics.drawLine(translateXIntoFramespace(previous.getX()), translateYIntoFramespace(previous.getY()), translateXIntoFramespace(next.getX()),
 						translateYIntoFramespace(next.getY()));
 				previous = next;
