@@ -89,6 +89,9 @@ public class PathfindingUtil {
 			final Set<PortalGraphNode> visitedNodes = new HashSet<>();
 			final PriorityQueue<Step> candidateSteps = prepareInitialCandidates(triangles2Portals.get(startTriangle), visitedNodes);
 			final Collection<PortalGraphNode> endNodes = triangles2Portals.get(endTriangle);
+			if (endNodes == null) {
+				return null;
+			}
 			final Step finalStep = determinePath(candidateSteps, visitedNodes, endNodes);
 			if (finalStep != null) {
 				final Stack<Step> stepsInOrder = reverseOrderOfSteps(finalStep);
@@ -111,7 +114,6 @@ public class PathfindingUtil {
 			Step finalStep = null;
 			while (!candidateSteps.isEmpty()) {
 				final Step currentStep = candidateSteps.poll();
-				System.out.println(currentStep.squaredDistanceTravelled + " -> " + currentStep.estimatedSquaredDistanceRemaining);
 				if (endNodes.contains(currentStep.node)) {
 					finalStep = currentStep;
 					break;
@@ -272,7 +274,7 @@ class DirtyIntervals {
 		do {
 			correctInterval = nextInterval;
 			nextInterval = iterator.next();
-		} while (position >= nextInterval.startPosition);
+		} while (position >= nextInterval.startPosition && iterator.hasNext());
 		if (correctInterval != null) {
 			return correctInterval.activeTriangles;
 		} else {

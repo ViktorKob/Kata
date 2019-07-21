@@ -1,8 +1,10 @@
 package net.thomas.kata.geometry.pathfinding;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -68,6 +70,7 @@ public class PathfindingUtilUnitTest {
 		when(triangles2PortalsMock.get(SOME_TRIANGLE_ONE_STEP_AWAY)).thenReturn(asList(FIRST_NODE, SECOND_NODE, THIRD_NODE));
 		when(triangles2PortalsMock.get(SOME_TRIANGLE_TWO_STEPS_AWAY)).thenReturn(singleton(SECOND_NODE));
 		when(triangles2PortalsMock.get(SOME_OTHER_TRIANGLE_TWO_STEPS_AWAY)).thenReturn(singleton(THIRD_NODE));
+		when(triangles2PortalsMock.get(SOME_TRIANGLE_IN_A_DIFFERENT_POLYGON)).thenReturn(emptySet());
 		util = new PathfindingUtil(triangles2PortalsMock);
 	}
 
@@ -96,6 +99,30 @@ public class PathfindingUtilUnitTest {
 		assertEquals(2, path.route.size());
 		assertEquals(PORTAL_1, path.route.get(0));
 		assertEquals(PORTAL_2, path.route.get(1));
+	}
+
+	@Test
+	public void shouldBeStableWhenCommingFromPointOutsidePolygon() {
+		final Path path = util.buildPath(SOME_POINT_OUTSIDE_ALL_TRIANGLES, SOME_POINT_IN_FIRST_TRIANGLE);
+		assertNull(path);
+	}
+
+	@Test
+	public void shouldBeStableWhenAimingForPointOutsidePolygon() {
+		final Path path = util.buildPath(SOME_POINT_IN_FIRST_TRIANGLE, SOME_POINT_OUTSIDE_ALL_TRIANGLES);
+		assertNull(path);
+	}
+
+	@Test
+	public void shouldBeStableWhenCommingFromPointInAnotherPolygon() {
+		final Path path = util.buildPath(SOME_POINT_IN_ANOTHER_POLYGON_TRIANGLE, SOME_POINT_IN_FIRST_TRIANGLE);
+		assertNull(path);
+	}
+
+	@Test
+	public void shouldBeStableWhenAimingForPointInAnotherPolygon() {
+		final Path path = util.buildPath(SOME_POINT_IN_FIRST_TRIANGLE, SOME_POINT_IN_ANOTHER_POLYGON_TRIANGLE);
+		assertNull(path);
 	}
 
 	abstract class TriangleMap implements Map<Triangle, Collection<PortalGraphNode>> {
