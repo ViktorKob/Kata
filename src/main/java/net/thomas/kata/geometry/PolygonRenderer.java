@@ -35,6 +35,7 @@ import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex;
 import net.thomas.kata.geometry.objects.PolygonVertex;
 import net.thomas.kata.geometry.pathfinding.PathfindingUtil;
 import net.thomas.kata.geometry.pathfinding.objects.Path;
+import net.thomas.kata.geometry.pathfinding.objects.Path.PortalStep;
 import net.thomas.kata.geometry.pathfinding.objects.Portal;
 import net.thomas.kata.geometry.pathfinding.objects.PortalGraphNode;
 import net.thomas.kata.geometry.pathfinding.objects.Triangle;
@@ -264,8 +265,8 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		for (final Path path : paths) {
 			final Line2D centerLine = new Line2D.Double(path.origin, path.destination);
 			Point2D previous = path.origin;
-			for (final Portal portal : path.route) {
-				final Point2D next = portal.getBestIntersectionPoint(centerLine);
+			for (final PortalStep step : path.route) {
+				final Point2D next = step.portal.getBestIntersectionPoint(centerLine);
 				graphics.drawLine(translateXIntoFramespace(previous.getX()), translateYIntoFramespace(previous.getY()), translateXIntoFramespace(next.getX()),
 						translateYIntoFramespace(next.getY()));
 				previous = next;

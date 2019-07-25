@@ -20,6 +20,7 @@ import java.util.function.Function;
 
 import net.thomas.kata.geometry.pathfinding.PathfindingUtil.TrianglePosition;
 import net.thomas.kata.geometry.pathfinding.objects.Path;
+import net.thomas.kata.geometry.pathfinding.objects.Path.PortalStep;
 import net.thomas.kata.geometry.pathfinding.objects.Portal;
 import net.thomas.kata.geometry.pathfinding.objects.PortalGraphNode;
 import net.thomas.kata.geometry.pathfinding.objects.Triangle;
@@ -159,15 +160,15 @@ public class PathfindingUtil {
 
 		private Path optimizePath(Path path) {
 			final Path optimizedPath = new Path(origin, destination);
-			Portal lastStep = null;
+			PortalStep lastStep = null;
 			Point2D secondLastPoint = null;
 			boolean skippedPortal = false;
-			for (final Portal step : path.route) {
+			for (final PortalStep step : path.route) {
 				if (lastStep != null) {
-					final Line2D.Double currentStretch = new Line2D.Double(secondLastPoint, step.getCenter());
-					if (!lastStep.intersectsLine(currentStretch)) {
-						optimizedPath.addPortal(lastStep);
-						secondLastPoint = lastStep.getBestIntersectionPoint(currentStretch);
+					final Line2D.Double currentStretch = new Line2D.Double(secondLastPoint, step.portal.getCenter());
+					if (!lastStep.portal.intersectsLine(currentStretch)) {
+						optimizedPath.addPortal(lastStep.portal);
+						secondLastPoint = lastStep.portal.getBestIntersectionPoint(currentStretch);
 						if (skippedPortal) {
 							optimizedPath.addPortal(new Portal(secondLastPoint, secondLastPoint));
 						}
@@ -182,9 +183,9 @@ public class PathfindingUtil {
 			}
 			if (lastStep != null) {
 				final Line2D.Double currentStretch = new Line2D.Double(secondLastPoint, destination);
-				if (!lastStep.intersectsLine(currentStretch)) {
-					optimizedPath.addPortal(lastStep);
-					secondLastPoint = lastStep.getBestIntersectionPoint(currentStretch);
+				if (!lastStep.portal.intersectsLine(currentStretch)) {
+					optimizedPath.addPortal(lastStep.portal);
+					secondLastPoint = lastStep.portal.getBestIntersectionPoint(currentStretch);
 				}
 			}
 			return optimizedPath;
