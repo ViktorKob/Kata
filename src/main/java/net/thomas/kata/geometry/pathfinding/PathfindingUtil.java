@@ -4,6 +4,7 @@ import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.util.Collections.emptySet;
 
+import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.util.Collection;
 import java.util.HashMap;
@@ -19,6 +20,7 @@ import java.util.function.Function;
 
 import net.thomas.kata.geometry.pathfinding.PathfindingUtil.TrianglePosition;
 import net.thomas.kata.geometry.pathfinding.objects.Path;
+import net.thomas.kata.geometry.pathfinding.objects.Portal;
 import net.thomas.kata.geometry.pathfinding.objects.PortalGraphNode;
 import net.thomas.kata.geometry.pathfinding.objects.Triangle;
 
@@ -78,21 +80,21 @@ public class PathfindingUtil {
 				if (startTriangle.equals(endTriangle)) {
 					return new Path(origin, destination);
 				} else {
-					return traverseGraphToDetermineBestPath();
+					return determineBestPath();
 				}
 			} else {
 				return null;
 			}
 		}
 
-		private Path traverseGraphToDetermineBestPath() {
+		private Path determineBestPath() {
 			final Set<PortalGraphNode> visitedNodes = new HashSet<>();
 			final PriorityQueue<Step> candidateSteps = prepareInitialCandidates(triangles2Portals.get(startTriangle), visitedNodes);
 			final Collection<PortalGraphNode> endNodes = triangles2Portals.get(endTriangle);
 			final Step finalStep = determinePath(candidateSteps, visitedNodes, endNodes);
 			if (finalStep != null) {
 				final Stack<Step> stepsInOrder = reverseOrderOfSteps(finalStep);
-				return buildPathShape(stepsInOrder);
+				return buildPath(stepsInOrder);
 			} else {
 				return null;
 			}
@@ -126,25 +128,6 @@ public class PathfindingUtil {
 			return finalStep;
 		}
 
-		private Stack<Step> reverseOrderOfSteps(final Step finalStep) {
-			Step current = finalStep;
-			final Stack<Step> stepsInOrder = new Stack<>();
-			while (current != null) {
-				stepsInOrder.push(current);
-				current = current.previousStep;
-			}
-			return stepsInOrder;
-		}
-
-		private Path buildPathShape(final Stack<Step> stepsInOrder) {
-			final Path path = new Path(origin, destination);
-			while (!stepsInOrder.isEmpty()) {
-				final Step step = stepsInOrder.pop();
-				path.addPortal(step.node.getPortal());
-			}
-			return path;
-		}
-
 		private Step buildStep(Step previousStep, PortalGraphNode node) {
 			double distanceTravelled = 0.0;
 			if (previousStep != null) {
@@ -156,6 +139,64 @@ public class PathfindingUtil {
 			}
 			final double remainingDistance = node.getCenterOfPortal().distanceSq(destination);
 			return new Step(distanceTravelled, remainingDistance, node, previousStep);
+		}
+
+		private Stack<Step> reverseOrderOfSteps(final Step finalStep) {
+			Step current = finalStep;
+			final Stack<Step> stepsInOrder = new Stack<>();
+			while (current != null) {
+				stepsInOrder.push(current);
+				current = current.previousStep;
+			}
+			return stepsInOrder;
+		}
+
+		private Path buildPath(final Stack<Step> stepsInOrder) {
+			final Path path = buildInitialPath(stepsInOrder);
+			System.out.println(optimizePath(path));
+			return path;
+		}
+
+		private Path optimizePath(Path path) {
+			final Path optimizedPath = new Path(origin, destination);
+			Portal lastStep = null;
+			Point2D secondLastPoint = null;
+			boolean skippedPortal = false;
+			for (final Portal step : path.route) {
+				if (lastStep != null) {
+					final Line2D.Double currentStretch = new Line2D.Double(secondLastPoint, step.getCenter());
+					if (!lastStep.intersectsLine(currentStretch)) {
+						optimizedPath.addPortal(lastStep);
+						secondLastPoint = lastStep.getBestIntersectionPoint(currentStretch);
+						if (skippedPortal) {
+							optimizedPath.addPortal(new Portal(secondLastPoint, secondLastPoint));
+						}
+						lastStep = step;
+					} else {
+						skippedPortal = true;
+					}
+				} else {
+					lastStep = step;
+					secondLastPoint = origin;
+				}
+			}
+			if (lastStep != null) {
+				final Line2D.Double currentStretch = new Line2D.Double(secondLastPoint, destination);
+				if (!lastStep.intersectsLine(currentStretch)) {
+					optimizedPath.addPortal(lastStep);
+					secondLastPoint = lastStep.getBestIntersectionPoint(currentStretch);
+				}
+			}
+			return optimizedPath;
+		}
+
+		private Path buildInitialPath(final Stack<Step> stepsInOrder) {
+			final Path path = new Path(origin, destination);
+			while (!stepsInOrder.isEmpty()) {
+				final Step step = stepsInOrder.pop();
+				path.addPortal(step.node.getPortal());
+			}
+			return path;
 		}
 
 		class Step implements Comparable<Step> {
