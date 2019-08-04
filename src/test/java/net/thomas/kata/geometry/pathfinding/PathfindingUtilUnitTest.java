@@ -3,6 +3,7 @@ package net.thomas.kata.geometry.pathfinding;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
+import static net.thomas.kata.geometry.pathfinding.PathfindingUtil.OptimizationTechnique.NONE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -76,7 +77,7 @@ public class PathfindingUtilUnitTest {
 
 	@Test
 	public void shouldBuildPathWithinTriangle() {
-		final Path path = util.buildPath(SOME_POINT_IN_FIRST_TRIANGLE, SOME_OTHER_POINT_IN_FIRST_TRIANGLE);
+		final Path path = util.buildPath(SOME_POINT_IN_FIRST_TRIANGLE, SOME_OTHER_POINT_IN_FIRST_TRIANGLE, NONE);
 		assertEquals(SOME_POINT_IN_FIRST_TRIANGLE, path.origin);
 		assertEquals(SOME_OTHER_POINT_IN_FIRST_TRIANGLE, path.destination);
 		assertTrue(path.route.isEmpty());
@@ -84,7 +85,7 @@ public class PathfindingUtilUnitTest {
 
 	@Test
 	public void shouldBuildSingleStepPathThroughFirstPortal() {
-		final Path path = util.buildPath(SOME_POINT_IN_FIRST_TRIANGLE, SOME_POINT_IN_SECOND_TRIANGLE);
+		final Path path = util.buildPath(SOME_POINT_IN_FIRST_TRIANGLE, SOME_POINT_IN_SECOND_TRIANGLE, NONE);
 		assertEquals(SOME_POINT_IN_FIRST_TRIANGLE, path.origin);
 		assertEquals(SOME_POINT_IN_SECOND_TRIANGLE, path.destination);
 		assertEquals(1, path.route.size());
@@ -93,7 +94,7 @@ public class PathfindingUtilUnitTest {
 
 	@Test
 	public void shouldBuildTwoStepPathThroughFirstAndSecondPortal() {
-		final Path path = util.buildPath(SOME_POINT_IN_FIRST_TRIANGLE, SOME_POINT_IN_THIRD_TRIANGLE);
+		final Path path = util.buildPath(SOME_POINT_IN_FIRST_TRIANGLE, SOME_POINT_IN_THIRD_TRIANGLE, NONE);
 		assertEquals(SOME_POINT_IN_FIRST_TRIANGLE, path.origin);
 		assertEquals(SOME_POINT_IN_THIRD_TRIANGLE, path.destination);
 		assertEquals(2, path.route.size());
@@ -103,25 +104,25 @@ public class PathfindingUtilUnitTest {
 
 	@Test
 	public void shouldBeStableWhenCommingFromPointOutsidePolygon() {
-		final Path path = util.buildPath(SOME_POINT_OUTSIDE_ALL_TRIANGLES, SOME_POINT_IN_FIRST_TRIANGLE);
+		final Path path = util.buildPath(SOME_POINT_OUTSIDE_ALL_TRIANGLES, SOME_POINT_IN_FIRST_TRIANGLE, NONE);
 		assertNull(path);
 	}
 
 	@Test
 	public void shouldBeStableWhenAimingForPointOutsidePolygon() {
-		final Path path = util.buildPath(SOME_POINT_IN_FIRST_TRIANGLE, SOME_POINT_OUTSIDE_ALL_TRIANGLES);
+		final Path path = util.buildPath(SOME_POINT_IN_FIRST_TRIANGLE, SOME_POINT_OUTSIDE_ALL_TRIANGLES, NONE);
 		assertNull(path);
 	}
 
 	@Test
 	public void shouldBeStableWhenCommingFromPointInAnotherPolygon() {
-		final Path path = util.buildPath(SOME_POINT_IN_ANOTHER_POLYGON_TRIANGLE, SOME_POINT_IN_FIRST_TRIANGLE);
+		final Path path = util.buildPath(SOME_POINT_IN_ANOTHER_POLYGON_TRIANGLE, SOME_POINT_IN_FIRST_TRIANGLE, NONE);
 		assertNull(path);
 	}
 
 	@Test
 	public void shouldBeStableWhenAimingForPointInAnotherPolygon() {
-		final Path path = util.buildPath(SOME_POINT_IN_FIRST_TRIANGLE, SOME_POINT_IN_ANOTHER_POLYGON_TRIANGLE);
+		final Path path = util.buildPath(SOME_POINT_IN_FIRST_TRIANGLE, SOME_POINT_IN_ANOTHER_POLYGON_TRIANGLE, NONE);
 		assertNull(path);
 	}
 

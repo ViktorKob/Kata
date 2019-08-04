@@ -5,6 +5,7 @@ import static java.lang.System.nanoTime;
 import static java.util.Arrays.asList;
 import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleSide.matchingVertex;
 import static net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex.TRIANGLE_VERTICES;
+import static net.thomas.kata.geometry.pathfinding.PathfindingUtil.OptimizationTechnique.NONE;
 
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
@@ -33,6 +34,7 @@ import net.thomas.kata.geometry.objects.PolygonTriangle;
 import net.thomas.kata.geometry.objects.PolygonTriangle.TriangleVertex;
 import net.thomas.kata.geometry.objects.PolygonVertex;
 import net.thomas.kata.geometry.pathfinding.PathfindingUtil;
+import net.thomas.kata.geometry.pathfinding.PathfindingUtil.OptimizationTechnique;
 import net.thomas.kata.geometry.pathfinding.objects.Path;
 import net.thomas.kata.geometry.pathfinding.objects.Path.PortalStep;
 import net.thomas.kata.geometry.pathfinding.objects.Portal;
@@ -48,8 +50,7 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 	private static final int NEIGHBOUR_OFFSET = 30;
 	private static final int DISPLACEMENT = 200;
 
-	private static final Color BASE_PATH_COLOR = new Color(.6f, 0.8f, .0f, 1.0f);
-	private static final Color OPTIMIZED_PATH_COLOR = new Color(.8f, 0.6f, .0f, 1.0f);
+	private static final Color PATH_COLOR = new Color(.6f, 0.8f, .0f, 1.0f);
 
 	private static final PolygonVertex SIMPLE_CLEAN_SAMPLE = new PolygonBuilder()
 			.add(new PolygonVertex(10, 10), new PolygonVertex(0, 10), new PolygonVertex(-10, -10), new PolygonVertex(0, -10))
@@ -92,6 +93,7 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 	private boolean renderTriangleGraph;
 	private boolean renderVertices;
 	private boolean renderPaths;
+	private OptimizationTechnique optimizationTechnique;
 
 	public static void main(String[] args) {
 		final PolygonUtil util = new PolygonUtilImpl();
@@ -150,6 +152,7 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		addKeyListener(this);
 		addMouseListener(new PathDefinitionListener());
 		renderOriginal = renderMonotones = renderTriangles = renderTriangleGraph = renderVertices = renderPaths = true;
+		optimizationTechnique = NONE;
 	}
 
 	@Override
@@ -207,7 +210,8 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 		}
 		graphics.setColor(new Color(.0f, .0f, .0f, 1.0f));
 		graphics.drawString("Drag from triangle to triangle to create path", 300, 40);
-		graphics.drawString("(Esc) to exit", 10, 160);
+		graphics.drawString("Optimization Technique (7): " + optimizationTechnique, 300, 60);
+		graphics.drawString("(Esc) to exit", 10, 180);
 	}
 
 	private void renderTriangles(final Graphics2D graphics) {
@@ -267,20 +271,13 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 			PortalStep previous = null;
 			for (final PortalStep step : path.route) {
 				final PortalStep next = step;
-				drawLine(previous == null ? path.origin : previous.waypoint, next.waypoint, BASE_PATH_COLOR, graphics);
-				final Point2D optimizedStart = previous == null ? path.origin : previous.optimizedWaypoint;
-				if (previous != null && previous.hasBeenOptimized() || next.hasBeenOptimized()) {
-					drawLine(optimizedStart, next.optimizedWaypoint, OPTIMIZED_PATH_COLOR, graphics);
-				}
+				drawLine(previous == null ? path.origin : previous.waypoint, next.waypoint, PATH_COLOR, graphics);
 				previous = next;
 			}
 			if (previous != null) {
-				drawLine(previous.waypoint, path.destination, BASE_PATH_COLOR, graphics);
-				if (previous.hasBeenOptimized()) {
-					drawLine(previous.optimizedWaypoint, path.destination, OPTIMIZED_PATH_COLOR, graphics);
-				}
+				drawLine(previous.waypoint, path.destination, PATH_COLOR, graphics);
 			} else {
-				drawLine(path.origin, path.destination, OPTIMIZED_PATH_COLOR, graphics);
+				drawLine(path.origin, path.destination, PATH_COLOR, graphics);
 			}
 		}
 	}
@@ -375,6 +372,8 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 			renderVertices = !renderVertices;
 		} else if (e.getKeyChar() == '6') {
 			renderPaths = !renderPaths;
+		} else if (e.getKeyChar() == '7') {
+			optimizationTechnique = optimizationTechnique.getNext();
 		} else if (e.getKeyChar() == KeyEvent.VK_ESCAPE) {
 			System.exit(0);
 		}
@@ -401,7 +400,7 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 			final Double releaseLocationInWorld = new Point2D.Double(translateXIntoWorldspace(location.x), translateYIntoWorldspace(location.y));
 			boolean success = false;
 			if (clickLocationInWorld != null) {
-				final Path path = pathFindingUtil.buildPath(clickLocationInWorld, releaseLocationInWorld);
+				final Path path = pathFindingUtil.buildPath(clickLocationInWorld, releaseLocationInWorld, optimizationTechnique);
 				if (path != null) {
 					paths.add(path);
 					repaint();

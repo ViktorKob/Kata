@@ -47,8 +47,23 @@ public class PathfindingUtil {
 		return new DirtyIntervals(positions);
 	}
 
-	public Path buildPath(Point2D location, Point2D destination) {
-		return new PathfinderAlgorithm(location, destination).findPath();
+	public Path buildPath(Point2D location, Point2D destination, OptimizationTechnique technique) {
+		return new PathfinderAlgorithm(location, destination).findPath(technique);
+	}
+
+	public static enum OptimizationTechnique {
+		NONE,
+		SINGLE_PASS_SMOOTHING,
+		DUAL_PASS_SMOOTHING,
+		TRIPPLE_PASS_SMOOTHING;
+
+		public OptimizationTechnique getNext() {
+			if (ordinal() < values().length - 1) {
+				return values()[ordinal() + 1];
+			} else {
+				return values()[0];
+			}
+		}
 	}
 
 	class PathfinderAlgorithm {
@@ -77,26 +92,26 @@ public class PathfindingUtil {
 			return null;
 		}
 
-		public Path findPath() {
+		public Path findPath(OptimizationTechnique technique) {
 			if (startTriangle != null && endTriangle != null) {
 				if (startTriangle.equals(endTriangle)) {
 					return new Path(origin, destination);
 				} else {
-					return determineBestPath();
+					return determineBestPath(technique);
 				}
 			} else {
 				return null;
 			}
 		}
 
-		private Path determineBestPath() {
+		private Path determineBestPath(OptimizationTechnique technique) {
 			final Set<PortalGraphNode> visitedNodes = new HashSet<>();
 			final PriorityQueue<Step> candidateSteps = prepareInitialCandidates(triangles2Portals.get(startTriangle), visitedNodes);
 			final Collection<PortalGraphNode> endNodes = triangles2Portals.get(endTriangle);
 			final Step finalStep = determinePath(candidateSteps, visitedNodes, endNodes);
 			if (finalStep != null) {
 				final Stack<Step> stepsInOrder = reverseOrderOfSteps(finalStep);
-				return buildPath(stepsInOrder);
+				return buildPath(stepsInOrder, technique);
 			} else {
 				return null;
 			}
@@ -152,10 +167,21 @@ public class PathfindingUtil {
 			return stepsInOrder;
 		}
 
-		private Path buildPath(final Stack<Step> stepsInOrder) {
+		private Path buildPath(final Stack<Step> stepsInOrder, OptimizationTechnique technique) {
 			Path path = buildInitialPath(stepsInOrder);
-			path = optimizePath(path);
-			return optimizePath(path);
+			switch (technique) {
+				case TRIPPLE_PASS_SMOOTHING:
+					path = optimizePath(path);
+				case DUAL_PASS_SMOOTHING:
+					path = optimizePath(path);
+				case SINGLE_PASS_SMOOTHING:
+					path = optimizePath(path);
+					break;
+				case NONE:
+				default:
+					break;
+			}
+			return path;
 		}
 
 		private Path buildInitialPath(final Stack<Step> stepsInOrder) {
@@ -173,14 +199,14 @@ public class PathfindingUtil {
 			for (final PortalStep step : path.route) {
 				if (steps.hasAny()) {
 					final PortalStep lastStep = steps.getLastStep();
-					lastStep.optimizedWaypoint.setLocation(determineBestIntersectionPoint(twoPointsBack, lastStep.portal, step.optimizedWaypoint));
-					twoPointsBack = lastStep.optimizedWaypoint;
+					lastStep.waypoint.setLocation(determineBestIntersectionPoint(twoPointsBack, lastStep.portal, step.waypoint));
+					twoPointsBack = lastStep.waypoint;
 				}
 				steps.add(step);
 			}
 			if (steps.hasAny()) {
 				final PortalStep lastStep = steps.getLastStep();
-				lastStep.optimizedWaypoint.setLocation(determineBestIntersectionPoint(twoPointsBack, lastStep.portal, destination));
+				lastStep.waypoint.setLocation(determineBestIntersectionPoint(twoPointsBack, lastStep.portal, destination));
 			}
 			return path;
 		}
