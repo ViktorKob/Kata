@@ -21,18 +21,6 @@ public class Portal extends Line2D.Double {
 		return t >= 0 && t < 1;
 	}
 
-	public Point2D calculatePointClosestTo(Point2D target) {
-		double t = NaN;
-		if (target instanceof Point2D.Double) {
-			final Point2D.Double other = (Point2D.Double) target;
-			t = determineTFromTwoLines(x1, x2, other.x, other.x, y1, y2, other.y, other.y);
-		} else if (target instanceof Point2D.Float) {
-			final Point2D.Float other = (Point2D.Float) target;
-			t = determineTFromTwoLines(x1, x2, other.x, other.x, y1, y2, other.y, other.y);
-		}
-		return calculatePointFromT(t);
-	}
-
 	public Point2D getBestIntersectionPoint(final Line2D o) {
 		double t = NaN;
 		if (o instanceof Line2D.Double) {
@@ -46,20 +34,15 @@ public class Portal extends Line2D.Double {
 	}
 
 	private Point2D calculatePointFromT(double t) {
-		if (t < 0) {
+		if (t <= 0.0) {
 			return getP1();
-		} else if (t > 1) {
+		} else if (t >= 1.0) {
 			return getP2();
 		} else {
 			final double x = x1 + t * (x2 - x1);
 			final double y = y1 + t * (y2 - y1);
 			return new Point2D.Double(x, y);
 		}
-	}
-
-	// TODO[Thomas]: implement
-	private double determineTFromPointAndLine(double x1, double x2, double x, double y1, double y2, double y) {
-		return ((x1 - x) * (y - y) - (y1 - y) * (x - x)) / ((x1 - x2) * (y - y) - (y1 - y2) * (x - x));
 	}
 
 	private double determineTFromTwoLines(double x1, double x2, double x3, double x4, double y1, double y2, double y3, double y4) {

@@ -22,12 +22,16 @@ public class Path {
 	public static class PortalStep {
 		public final Portal portal;
 		public final Point2D waypoint;
-		public boolean shouldBeIncludedInPath;
+		public final Point2D optimizedWaypoint;
 
 		public PortalStep(Portal portal) {
 			this.portal = portal;
 			waypoint = portal.getCenter();
-			shouldBeIncludedInPath = true;
+			optimizedWaypoint = portal.getCenter();
+		}
+
+		public boolean hasBeenOptimized() {
+			return !waypoint.equals(optimizedWaypoint);
 		}
 	}
 }

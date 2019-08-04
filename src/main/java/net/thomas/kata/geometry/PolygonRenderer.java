@@ -48,6 +48,9 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 	private static final int NEIGHBOUR_OFFSET = 30;
 	private static final int DISPLACEMENT = 200;
 
+	private static final Color BASE_PATH_COLOR = new Color(.6f, 0.8f, .0f, 1.0f);
+	private static final Color OPTIMIZED_PATH_COLOR = new Color(.8f, 0.6f, .0f, 1.0f);
+
 	private static final PolygonVertex SIMPLE_CLEAN_SAMPLE = new PolygonBuilder()
 			.add(new PolygonVertex(10, 10), new PolygonVertex(0, 10), new PolygonVertex(-10, -10), new PolygonVertex(0, -10))
 			.build();
@@ -260,19 +263,32 @@ public class PolygonRenderer extends JFrame implements KeyListener {
 	}
 
 	private void renderPaths(Graphics2D graphics) {
-		graphics.setColor(new Color(.6f, 0.8f, .0f, 1.0f));
 		for (final Path path : paths) {
-			Point2D previous = path.origin;
+			PortalStep previous = null;
 			for (final PortalStep step : path.route) {
-				final Point2D next = step.waypoint;
-				graphics.drawLine(translateXIntoFramespace(previous.getX()), translateYIntoFramespace(previous.getY()), translateXIntoFramespace(next.getX()),
-						translateYIntoFramespace(next.getY()));
+				final PortalStep next = step;
+				drawLine(previous == null ? path.origin : previous.waypoint, next.waypoint, BASE_PATH_COLOR, graphics);
+				final Point2D optimizedStart = previous == null ? path.origin : previous.optimizedWaypoint;
+				if (previous != null && previous.hasBeenOptimized() || next.hasBeenOptimized()) {
+					drawLine(optimizedStart, next.optimizedWaypoint, OPTIMIZED_PATH_COLOR, graphics);
+				}
 				previous = next;
 			}
-			final Point2D next = path.destination;
-			graphics.drawLine(translateXIntoFramespace(previous.getX()), translateYIntoFramespace(previous.getY()), translateXIntoFramespace(next.getX()),
-					translateYIntoFramespace(next.getY()));
+			if (previous != null) {
+				drawLine(previous.waypoint, path.destination, BASE_PATH_COLOR, graphics);
+				if (previous.hasBeenOptimized()) {
+					drawLine(previous.optimizedWaypoint, path.destination, OPTIMIZED_PATH_COLOR, graphics);
+				}
+			} else {
+				drawLine(path.origin, path.destination, OPTIMIZED_PATH_COLOR, graphics);
+			}
 		}
+	}
+
+	private void drawLine(Point2D start, final Point2D end, Color color, Graphics2D graphics) {
+		graphics.setColor(color);
+		graphics.drawLine(translateXIntoFramespace(start.getX()), translateYIntoFramespace(start.getY()), translateXIntoFramespace(end.getX()),
+				translateYIntoFramespace(end.getY()));
 	}
 
 	private void drawVertices(final PolygonVertex polygon, Graphics graphics) {

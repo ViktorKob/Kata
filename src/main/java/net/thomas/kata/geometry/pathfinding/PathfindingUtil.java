@@ -6,6 +6,7 @@ import static java.util.Collections.emptySet;
 
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -133,7 +134,6 @@ public class PathfindingUtil {
 			double distanceTravelled = 0.0;
 			if (previousStep != null) {
 				distanceTravelled += previousStep.squaredDistanceTravelled;
-				// final Point2D closestPoint = node.getPortal().calculatePointClosestTo(destination);
 				distanceTravelled += node.getPortal().getCenter().distanceSq(previousStep.node.getCenterOfPortal());
 			} else {
 				distanceTravelled += node.getPortal().getCenter().distanceSq(origin);
@@ -153,42 +153,9 @@ public class PathfindingUtil {
 		}
 
 		private Path buildPath(final Stack<Step> stepsInOrder) {
-			final Path path = buildInitialPath(stepsInOrder);
-			System.out.println(optimizePath(path));
-			return path;
-		}
-
-		private Path optimizePath(Path path) {
-			final Path optimizedPath = new Path(origin, destination);
-			PortalStep lastStep = null;
-			Point2D secondLastPoint = null;
-			boolean skippedPortal = false;
-			for (final PortalStep step : path.route) {
-				if (lastStep != null) {
-					final Line2D.Double currentStretch = new Line2D.Double(secondLastPoint, step.portal.getCenter());
-					if (!lastStep.portal.intersectsLine(currentStretch)) {
-						optimizedPath.addPortal(lastStep.portal);
-						secondLastPoint = lastStep.portal.getBestIntersectionPoint(currentStretch);
-						if (skippedPortal) {
-							optimizedPath.addPortal(new Portal(secondLastPoint, secondLastPoint));
-						}
-						lastStep = step;
-					} else {
-						skippedPortal = true;
-					}
-				} else {
-					lastStep = step;
-					secondLastPoint = origin;
-				}
-			}
-			if (lastStep != null) {
-				final Line2D.Double currentStretch = new Line2D.Double(secondLastPoint, destination);
-				if (!lastStep.portal.intersectsLine(currentStretch)) {
-					optimizedPath.addPortal(lastStep.portal);
-					secondLastPoint = lastStep.portal.getBestIntersectionPoint(currentStretch);
-				}
-			}
-			return optimizedPath;
+			Path path = buildInitialPath(stepsInOrder);
+			path = optimizePath(path);
+			return optimizePath(path);
 		}
 
 		private Path buildInitialPath(final Stack<Step> stepsInOrder) {
@@ -198,6 +165,41 @@ public class PathfindingUtil {
 				path.addPortal(step.node.getPortal());
 			}
 			return path;
+		}
+
+		private Path optimizePath(Path path) {
+			final PathSteps steps = new PathSteps();
+			Point2D twoPointsBack = origin;
+			for (final PortalStep step : path.route) {
+				if (steps.hasAny()) {
+					final PortalStep lastStep = steps.getLastStep();
+					lastStep.optimizedWaypoint.setLocation(determineBestIntersectionPoint(twoPointsBack, lastStep.portal, step.optimizedWaypoint));
+					twoPointsBack = lastStep.optimizedWaypoint;
+				}
+				steps.add(step);
+			}
+			if (steps.hasAny()) {
+				final PortalStep lastStep = steps.getLastStep();
+				lastStep.optimizedWaypoint.setLocation(determineBestIntersectionPoint(twoPointsBack, lastStep.portal, destination));
+			}
+			return path;
+		}
+
+		private class PathSteps extends ArrayList<PortalStep> {
+			private static final long serialVersionUID = 1L;
+
+			public boolean hasAny() {
+				return !isEmpty();
+			}
+
+			public PortalStep getLastStep() {
+				return get(size() - 1);
+			}
+		}
+
+		private Point2D determineBestIntersectionPoint(Point2D before, Portal portal, Point2D after) {
+			final Line2D.Double currentStretch = new Line2D.Double(before, after);
+			return portal.getBestIntersectionPoint(currentStretch);
 		}
 
 		class Step implements Comparable<Step> {
