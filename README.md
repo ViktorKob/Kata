@@ -11,4 +11,4 @@ Run net.thomas.kata.geometry.PolygonRenderer for visualization of the polygon tr
 - Use 5 to show / hide the points
 - Use Esc to exit
 
-Or try out [Space Invaders] (https://github.com/ViktorKob/Kata/tree/master/legacy/SpaceInvaders.jar) (an old project I wrote for a job application)
+Or try out [Space Invaders](https://github.com/ViktorKob/Kata/tree/master/legacy/SpaceInvaders.jar) (an old project I wrote for a job application)
