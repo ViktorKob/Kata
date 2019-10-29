@@ -5,6 +5,7 @@ import static java.lang.Thread.sleep;
 import static net.thomas.kata.ugp.engine.FixedTimeTickingEngine.EngineState.CREATED;
 import static net.thomas.kata.ugp.engine.FixedTimeTickingEngine.EngineState.EXITING;
 import static net.thomas.kata.ugp.engine.FixedTimeTickingEngine.EngineState.INITIALIZING;
+import static net.thomas.kata.ugp.engine.FixedTimeTickingEngine.EngineState.PAUSED;
 import static net.thomas.kata.ugp.engine.FixedTimeTickingEngine.EngineState.RUNNING;
 import static net.thomas.kata.ugp.engine.FixedTimeTickingEngine.EngineState.TERMINATED;
 
@@ -43,9 +44,11 @@ public class FixedTimeTickingEngine implements Runnable {
 		state = CREATED;
 	}
 
-	public synchronized void addTask(FixedTimeTickableTask task) {
+	public synchronized void addTasks(FixedTimeTickableTask... tasks) {
 		synchronized (newTasks) {
-			newTasks.add(task);
+			for (final FixedTimeTickableTask task : tasks) {
+				newTasks.add(task);
+			}
 		}
 	}
 
@@ -67,14 +70,17 @@ public class FixedTimeTickingEngine implements Runnable {
 					currentEngineTick += ticksPerIteration;
 					includeNewTasksIfAny(currentEngineTick);
 					iterateTasks();
+					stamp += ticksPerIteration;
 				} else {
 					if (MAY_SLEEP_BETWEEN_ITERATIONS) {
 						sleepSilently();
 					}
 				}
-				stamp = now;
 			}
-			sleepSilently();
+			while (state == PAUSED) {
+				sleepSilently();
+				stamp = now();
+			}
 		}
 		terminateTasks();
 		state = TERMINATED;
