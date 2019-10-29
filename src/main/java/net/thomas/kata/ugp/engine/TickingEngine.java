@@ -2,12 +2,12 @@ package net.thomas.kata.ugp.engine;
 
 import static java.lang.System.nanoTime;
 import static java.lang.Thread.sleep;
-import static net.thomas.kata.ugp.engine.FixedTimeTickingEngine.EngineState.CREATED;
-import static net.thomas.kata.ugp.engine.FixedTimeTickingEngine.EngineState.EXITING;
-import static net.thomas.kata.ugp.engine.FixedTimeTickingEngine.EngineState.INITIALIZING;
-import static net.thomas.kata.ugp.engine.FixedTimeTickingEngine.EngineState.PAUSED;
-import static net.thomas.kata.ugp.engine.FixedTimeTickingEngine.EngineState.RUNNING;
-import static net.thomas.kata.ugp.engine.FixedTimeTickingEngine.EngineState.TERMINATED;
+import static net.thomas.kata.ugp.engine.TickingEngine.EngineState.CREATED;
+import static net.thomas.kata.ugp.engine.TickingEngine.EngineState.EXITING;
+import static net.thomas.kata.ugp.engine.TickingEngine.EngineState.INITIALIZING;
+import static net.thomas.kata.ugp.engine.TickingEngine.EngineState.PAUSED;
+import static net.thomas.kata.ugp.engine.TickingEngine.EngineState.RUNNING;
+import static net.thomas.kata.ugp.engine.TickingEngine.EngineState.TERMINATED;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.PriorityQueue;
 /***
  * 1 tick = 1 microsecond
  ***/
-public class FixedTimeTickingEngine implements Runnable {
+public class TickingEngine implements Runnable {
 	public enum EngineState {
 		CREATED,
 		INITIALIZING,
@@ -30,26 +30,36 @@ public class FixedTimeTickingEngine implements Runnable {
 
 	private final int ticksPerIteration;
 	private EngineState state;
-	private final PriorityQueue<FixedTimeTickableTask> tasks;
-	private final List<FixedTimeTickableTask> newTasks;
+	private final PriorityQueue<TickableTask> tasks;
+	private final List<TickableTask> newTasks;
 	private long stamp;
 	private long currentEngineTick;
+	private float currentTickScale;
 
-	public FixedTimeTickingEngine(int ticksPerIteration) {
+	private boolean tickScaleIsDirty;
+
+	public TickingEngine(int ticksPerIteration) {
 		this.ticksPerIteration = ticksPerIteration;
 		tasks = new PriorityQueue<>((left, right) -> {
 			return (int) (left.getTimeOfNextTick() - right.getTimeOfNextTick());
 		});
 		newTasks = new LinkedList<>();
+		currentTickScale = 1;
+		tickScaleIsDirty = true;
 		state = CREATED;
 	}
 
-	public synchronized void addTasks(FixedTimeTickableTask... tasks) {
+	public synchronized void addTasks(TickableTask... tasks) {
 		synchronized (newTasks) {
-			for (final FixedTimeTickableTask task : tasks) {
+			for (final TickableTask task : tasks) {
 				newTasks.add(task);
 			}
 		}
+	}
+
+	public void setTickScale(float tickScale) {
+		currentTickScale = tickScale;
+		tickScaleIsDirty = true;
 	}
 
 	@Override
@@ -59,7 +69,7 @@ public class FixedTimeTickingEngine implements Runnable {
 		}
 		state = INITIALIZING;
 		currentEngineTick = 0;
-		initializeTasks(currentEngineTick);
+		initializeTasks(currentEngineTick, currentTickScale);
 		state = RUNNING;
 		stamp = now();
 		while (state != EXITING) {
@@ -68,7 +78,8 @@ public class FixedTimeTickingEngine implements Runnable {
 				final long deltaTicks = now - stamp;
 				if (deltaTicks > ticksPerIteration) {
 					currentEngineTick += ticksPerIteration;
-					includeNewTasksIfAny(currentEngineTick);
+					updateTickScaleIfNecessary(currentTickScale);
+					includeNewTasksIfAny(currentEngineTick, currentTickScale);
 					iterateTasks();
 					stamp += ticksPerIteration;
 				} else {
@@ -86,17 +97,25 @@ public class FixedTimeTickingEngine implements Runnable {
 		state = TERMINATED;
 	}
 
-	private void initializeTasks(long currentEngineTick) {
-		for (final FixedTimeTickableTask task : tasks) {
-			task.initialize(currentEngineTick);
+	private void initializeTasks(long currentEngineTick, float tickScale) {
+		for (final TickableTask task : tasks) {
+			task.initialize(currentEngineTick, tickScale);
 		}
 	}
 
-	private void includeNewTasksIfAny(long currentEngineTick) {
+	private void updateTickScaleIfNecessary(float currentTickScale) {
+		if (tickScaleIsDirty) {
+			for (final TickableTask task : tasks) {
+				task.setTickScale(currentTickScale);
+			}
+		}
+	}
+
+	private void includeNewTasksIfAny(long currentEngineTick, float tickScale) {
 		if (newTasks.size() > 0) {
 			synchronized (newTasks) {
-				for (final FixedTimeTickableTask task : newTasks) {
-					task.initialize(currentEngineTick);
+				for (final TickableTask task : newTasks) {
+					task.initialize(currentEngineTick, tickScale);
 					tasks.add(task);
 				}
 				newTasks.clear();
@@ -106,7 +125,7 @@ public class FixedTimeTickingEngine implements Runnable {
 
 	private void iterateTasks() {
 		while (tasks.size() > 0 && tasks.peek().getTimeOfNextTick() <= currentEngineTick) {
-			final FixedTimeTickableTask task = tasks.poll();
+			final TickableTask task = tasks.poll();
 			task.tick();
 			if (task.shouldRunAgain()) {
 				tasks.add(task);
@@ -124,7 +143,7 @@ public class FixedTimeTickingEngine implements Runnable {
 	}
 
 	private void terminateTasks() {
-		for (final FixedTimeTickableTask task : tasks) {
+		for (final TickableTask task : tasks) {
 			task.terminate();
 		}
 	}
