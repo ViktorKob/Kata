@@ -1,5 +1,7 @@
 package net.thomas.kata.ugp.world.entity.item;
 
-public interface Equipment {
+import net.thomas.kata.ugp.world.entity.Entity;
+
+public interface Equipment extends Entity {
 
 }

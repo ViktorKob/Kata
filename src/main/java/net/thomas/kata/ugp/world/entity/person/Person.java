@@ -1,5 +1,7 @@
 package net.thomas.kata.ugp.world.entity.person;
 
-public interface Person {
+import net.thomas.kata.ugp.world.entity.Entity;
+
+public interface Person extends Entity {
 
 }
