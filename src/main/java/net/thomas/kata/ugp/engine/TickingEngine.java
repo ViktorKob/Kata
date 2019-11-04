@@ -124,7 +124,7 @@ public class TickingEngine implements Runnable {
 				tasks.add(task);
 			} else {
 				task.terminate();
-				if (exitWhenDone && tasks.size() == 0) {
+				if (exitWhenDone && tasks.size() == 0 && newTasks.size() == 0) {
 					stop();
 				}
 			}

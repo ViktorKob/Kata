@@ -1,6 +1,8 @@
 package net.thomas.kata.ugp.engine;
 
 import static java.lang.System.currentTimeMillis;
+import static net.thomas.kata.ugp.engine.TickingEngine.DEFAULT_TICKS_PER_ITERATION;
+import static net.thomas.kata.ugp.engine.TickingEngine.EngineState.CREATED;
 import static net.thomas.kata.ugp.engine.TickingEngine.EngineState.RUNNING;
 import static net.thomas.kata.ugp.engine.TickingEngine.EngineState.TERMINATED;
 import static org.junit.Assert.assertEquals;
@@ -14,6 +16,7 @@ import net.thomas.kata.ugp.engine.TickingEngine.EngineState;
 
 public class TickingEngineUnitTest {
 	private static final boolean KEEP_RUNNING_WHEN_DONE = false;
+	private static final boolean EXIT_WHEN_DONE = true;
 	private static final int SOME_TIME_SCALE = 2;
 	private static final int EXECUTION_TIMEOUT = 10;
 	private static final int SHUTDOWN_TIMEOUT = 1000;
@@ -21,25 +24,27 @@ public class TickingEngineUnitTest {
 	private static final boolean SHOULD_RUN_ONCE = false;
 	private static final int MINIMUM_TICK_SIZE_IN_MICROSECONDS = 100;
 	private static final int TICKS_BETWEEN_TASK_EXECUTIONS = 100;
-	private TickingEngine engine;
+	private TickingEngine continuousEngine;
+	private TickingEngine onceOffEngine;
 
 	@Before
 	public void setUpEngine() {
-		engine = new TickingEngine(MINIMUM_TICK_SIZE_IN_MICROSECONDS, KEEP_RUNNING_WHEN_DONE);
+		continuousEngine = new TickingEngine(MINIMUM_TICK_SIZE_IN_MICROSECONDS, KEEP_RUNNING_WHEN_DONE);
+		onceOffEngine = new TickingEngine(MINIMUM_TICK_SIZE_IN_MICROSECONDS, EXIT_WHEN_DONE);
 	}
 
 	@Test(timeout = 1000)
 	public void shouldDryRunEmptyEngineCorrectly() {
-		new Thread(engine).start();
-		waitForEngineState(RUNNING, EXECUTION_TIMEOUT);
+		new Thread(continuousEngine).start();
+		waitForEngineState(continuousEngine, RUNNING, EXECUTION_TIMEOUT);
 	}
 
 	@Test(timeout = 1000)
 	public void shouldRunTaskAtLeastTwice() {
 		final TimeTickableTask task = new TimeTickableTask(TICKS_BETWEEN_TASK_EXECUTIONS, SHOULD_RUN_FOREVER);
-		engine.addTasks(task);
-		new Thread(engine).start();
-		waitForEngineState(RUNNING, EXECUTION_TIMEOUT);
+		continuousEngine.addTasks(task);
+		new Thread(continuousEngine).start();
+		waitForEngineState(continuousEngine, RUNNING, EXECUTION_TIMEOUT);
 		sleepSilently(TICKS_BETWEEN_TASK_EXECUTIONS * 100);
 		assertTrue("Expected at least 2 ticks, got " + task.getTimesRun(), task.getTimesRun() >= 2);
 	}
@@ -47,21 +52,21 @@ public class TickingEngineUnitTest {
 	@Test(timeout = 2000)
 	public void shouldTerminateTaskAfterEngineTermination() {
 		final TimeTickableTask task = new TimeTickableTask(TICKS_BETWEEN_TASK_EXECUTIONS, SHOULD_RUN_FOREVER);
-		engine.addTasks(task);
-		new Thread(engine).start();
-		waitForEngineState(RUNNING, EXECUTION_TIMEOUT);
+		continuousEngine.addTasks(task);
+		new Thread(continuousEngine).start();
+		waitForEngineState(continuousEngine, RUNNING, EXECUTION_TIMEOUT);
 		sleepSilently(TICKS_BETWEEN_TASK_EXECUTIONS);
-		engine.stop();
-		waitForEngineState(TERMINATED, SHUTDOWN_TIMEOUT);
+		continuousEngine.stop();
+		waitForEngineState(continuousEngine, TERMINATED, SHUTDOWN_TIMEOUT);
 		assertTrue("Task failed to terminate after engine shutdown", task.isTerminated());
 	}
 
 	@Test(timeout = 1000)
 	public void shouldTerminateTaskAfterExecution() {
 		final TimeTickableTask task = new TimeTickableTask(TICKS_BETWEEN_TASK_EXECUTIONS, SHOULD_RUN_ONCE);
-		engine.addTasks(task);
-		new Thread(engine).start();
-		waitForEngineState(RUNNING, EXECUTION_TIMEOUT);
+		continuousEngine.addTasks(task);
+		new Thread(continuousEngine).start();
+		waitForEngineState(continuousEngine, RUNNING, EXECUTION_TIMEOUT);
 		sleepSilently(TICKS_BETWEEN_TASK_EXECUTIONS);
 		assertTrue("Task failed to terminate after task execution", task.isTerminated());
 	}
@@ -69,22 +74,42 @@ public class TickingEngineUnitTest {
 	@Test(timeout = 1000)
 	public void shouldRunTaskExactlyOnce() {
 		final TimeTickableTask task = new TimeTickableTask(TICKS_BETWEEN_TASK_EXECUTIONS, SHOULD_RUN_ONCE);
-		engine.addTasks(task);
-		new Thread(engine).start();
-		waitForEngineState(RUNNING, EXECUTION_TIMEOUT);
+		continuousEngine.addTasks(task);
+		new Thread(continuousEngine).start();
+		waitForEngineState(continuousEngine, RUNNING, EXECUTION_TIMEOUT);
 		sleepSilently(TICKS_BETWEEN_TASK_EXECUTIONS * 100);
 		assertTrue("Expected 1 tick, got " + task.getTimesRun(), task.getTimesRun() == 1);
+	}
+
+	@Test(timeout = 1000)
+	public void shouldExecuteCountdownTaskFullyThenShutDown() {
+		new Thread(onceOffEngine).start();
+		waitForEngineState(onceOffEngine, RUNNING, EXECUTION_TIMEOUT);
+		final CountDownTask task = new CountDownTask(2);
+		onceOffEngine.addTasks(task);
+		waitForEngineState(onceOffEngine, TERMINATED, SHUTDOWN_TIMEOUT);
+		assertEquals(0, task.getCount());
+	}
+
+	@Test(timeout = 1000)
+	public void shouldExecuteSubTaskFully() {
+		new Thread(onceOffEngine).start();
+		waitForEngineState(onceOffEngine, RUNNING, EXECUTION_TIMEOUT);
+		final TaskSpawningTask task = new TaskSpawningTask(2);
+		onceOffEngine.addTasks(task);
+		waitForEngineState(onceOffEngine, TERMINATED, SHUTDOWN_TIMEOUT);
+		assertEquals(0, task.getCount());
 	}
 
 	@Test(timeout = 1000)
 	public void shouldRunMultipleTasksAtLeastTwiceEach() {
 		final TimeTickableTask task1 = new TimeTickableTask(TICKS_BETWEEN_TASK_EXECUTIONS, SHOULD_RUN_FOREVER);
 		final TimeTickableTask task2 = new TimeTickableTask(TICKS_BETWEEN_TASK_EXECUTIONS, SHOULD_RUN_FOREVER);
-		engine.addTasks(task1);
-		engine.addTasks(task2);
-		new Thread(engine).start();
-		waitForEngineState(RUNNING, EXECUTION_TIMEOUT);
-		sleepSilently(TICKS_BETWEEN_TASK_EXECUTIONS * 100);
+		continuousEngine.addTasks(task1);
+		continuousEngine.addTasks(task2);
+		new Thread(continuousEngine).start();
+		waitForEngineState(continuousEngine, RUNNING, EXECUTION_TIMEOUT);
+		sleepSilently(TICKS_BETWEEN_TASK_EXECUTIONS * 200);
 		assertTrue("Expected at least 2 ticks for task 1, got " + task1.getTimesRun(), task1.getTimesRun() >= 2);
 		assertTrue("Expected at least 2 ticks for task 2, got " + task2.getTimesRun(), task2.getTimesRun() >= 2);
 	}
@@ -94,11 +119,11 @@ public class TickingEngineUnitTest {
 		final TimeTickableTask task1 = new TimeTickableTask(1 * TICKS_BETWEEN_TASK_EXECUTIONS, SHOULD_RUN_FOREVER);
 		final TimeTickableTask task2 = new TimeTickableTask(2 * TICKS_BETWEEN_TASK_EXECUTIONS, SHOULD_RUN_FOREVER);
 		final TimeTickableTask task3 = new TimeTickableTask(3 * TICKS_BETWEEN_TASK_EXECUTIONS, SHOULD_RUN_FOREVER);
-		engine.addTasks(task1);
-		engine.addTasks(task2);
-		engine.addTasks(task3);
-		new Thread(engine).start();
-		waitForEngineState(RUNNING, EXECUTION_TIMEOUT);
+		continuousEngine.addTasks(task1);
+		continuousEngine.addTasks(task2);
+		continuousEngine.addTasks(task3);
+		new Thread(continuousEngine).start();
+		waitForEngineState(continuousEngine, RUNNING, EXECUTION_TIMEOUT);
 		sleepSilently(TICKS_BETWEEN_TASK_EXECUTIONS * 100);
 		assertTrue("Task 1 should have been run more often than task 2, was (" + task1.getTimesRun() + ", " + task2.getTimesRun() + ")",
 				task1.getTimesRun() > task2.getTimesRun());
@@ -109,9 +134,9 @@ public class TickingEngineUnitTest {
 	@Test(timeout = 1000)
 	public void shouldRunTaskForCorrectNumberOfTicks() {
 		final TimeTickableTask task = new TimeTickableTask(TICKS_BETWEEN_TASK_EXECUTIONS, SHOULD_RUN_FOREVER);
-		engine.addTasks(task);
-		new Thread(engine).start();
-		waitForEngineState(RUNNING, EXECUTION_TIMEOUT);
+		continuousEngine.addTasks(task);
+		new Thread(continuousEngine).start();
+		waitForEngineState(continuousEngine, RUNNING, EXECUTION_TIMEOUT);
 		sleepSilently(TICKS_BETWEEN_TASK_EXECUTIONS * 100);
 		assertEquals(task.getTimesRun() * TICKS_BETWEEN_TASK_EXECUTIONS, task.getTotalTicks());
 	}
@@ -119,23 +144,28 @@ public class TickingEngineUnitTest {
 	@Test(timeout = 1000)
 	public void shouldRunTaskForCorrectNumberOfTicksWhenScaled() {
 		final TimeTickableTask task = new TimeTickableTask(TICKS_BETWEEN_TASK_EXECUTIONS, SHOULD_RUN_FOREVER);
-		engine.addTasks(task);
-		engine.setTickScale(SOME_TIME_SCALE);
-		new Thread(engine).start();
-		waitForEngineState(RUNNING, EXECUTION_TIMEOUT);
+		continuousEngine.addTasks(task);
+		continuousEngine.setTickScale(SOME_TIME_SCALE);
+		new Thread(continuousEngine).start();
+		waitForEngineState(continuousEngine, RUNNING, EXECUTION_TIMEOUT);
 		sleepSilently(TICKS_BETWEEN_TASK_EXECUTIONS * 100);
 		assertEquals(task.getTimesRun() * TICKS_BETWEEN_TASK_EXECUTIONS * SOME_TIME_SCALE, task.getTotalTicks());
 	}
 
 	@After
-	public void shutDownEngine() {
-		if (engine.getCurrentState() != TERMINATED) {
+	public void shutDownEngines() {
+		shutDownEngineIfRunning(continuousEngine);
+		shutDownEngineIfRunning(onceOffEngine);
+	}
+
+	private void shutDownEngineIfRunning(TickingEngine engine) {
+		if (engine.getCurrentState() != CREATED && engine.getCurrentState() != TERMINATED) {
 			engine.stop();
-			waitForEngineState(TERMINATED, SHUTDOWN_TIMEOUT);
+			waitForEngineState(engine, TERMINATED, SHUTDOWN_TIMEOUT);
 		}
 	}
 
-	private void waitForEngineState(EngineState state, int timeoutInMilliseconds) {
+	private void waitForEngineState(TickingEngine engine, EngineState state, int timeoutInMilliseconds) {
 		final long stamp = currentTimeMillis();
 		while (engine.getCurrentState() != state) {
 			if (stamp + timeoutInMilliseconds < currentTimeMillis()) {
@@ -182,6 +212,55 @@ public class TickingEngineUnitTest {
 
 		public boolean isTerminated() {
 			return terminated;
+		}
+	}
+
+	private static class CountDownTask extends TickableTask {
+		private int count;
+
+		public CountDownTask(int count) {
+			super(DEFAULT_TICKS_PER_ITERATION);
+			this.count = count;
+		}
+
+		@Override
+		public boolean shouldRunAgain() {
+			return count > 0;
+		}
+
+		@Override
+		protected void _tick(int iterationTicks) {
+			count--;
+		}
+
+		public int getCount() {
+			return count;
+		}
+	}
+
+	private static class TaskSpawningTask extends TickableTask {
+		private final CountDownTask task;
+		private boolean hasSpawnedTask;
+
+		public TaskSpawningTask(int count) {
+			super(DEFAULT_TICKS_PER_ITERATION);
+			task = new CountDownTask(count);
+			hasSpawnedTask = false;
+		}
+
+		@Override
+		public boolean shouldRunAgain() {
+			return !hasSpawnedTask;
+		}
+
+		@Override
+		protected void _tick(int iterationTicks) {
+			engine.addTasks(task);
+			hasSpawnedTask = true;
+		}
+
+		public int getCount() {
+			return task.getCount();
 		}
 	}
 
