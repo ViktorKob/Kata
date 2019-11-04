@@ -4,17 +4,19 @@ package net.thomas.kata.ugp.engine;
  * 1 tick = 1 microsecond
  */
 public abstract class TickableTask {
-	protected final int ticksPerIteration;
+	protected final int ticksPerTaskIteration;
+	protected TickingEngine engine;
 	private long nextTick;
 	protected boolean shouldRunAgain;
 	private float tickScale;
 
-	protected TickableTask(int ticksPrIteration) {
-		ticksPerIteration = ticksPrIteration;
+	protected TickableTask(int ticksPerTaskIteration) {
+		this.ticksPerTaskIteration = ticksPerTaskIteration;
 		shouldRunAgain = true;
 	}
 
-	public void initialize(long currentTick, float tickScale) {
+	public void initialize(TickingEngine engine, long currentTick, float tickScale) {
+		this.engine = engine;
 		nextTick = currentTick;
 		this.tickScale = tickScale;
 	}
@@ -32,7 +34,7 @@ public abstract class TickableTask {
 	}
 
 	public void tick() {
-		final int iterationTicks = (int) (ticksPerIteration * tickScale);
+		final int iterationTicks = (int) (ticksPerTaskIteration * tickScale);
 		_tick(iterationTicks);
 		nextTick += iterationTicks;
 	}

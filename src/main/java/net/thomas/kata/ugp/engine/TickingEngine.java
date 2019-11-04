@@ -4,7 +4,6 @@ import static java.lang.System.nanoTime;
 import static java.lang.Thread.sleep;
 import static net.thomas.kata.ugp.engine.TickingEngine.EngineState.CREATED;
 import static net.thomas.kata.ugp.engine.TickingEngine.EngineState.EXITING;
-import static net.thomas.kata.ugp.engine.TickingEngine.EngineState.INITIALIZING;
 import static net.thomas.kata.ugp.engine.TickingEngine.EngineState.PAUSED;
 import static net.thomas.kata.ugp.engine.TickingEngine.EngineState.RUNNING;
 import static net.thomas.kata.ugp.engine.TickingEngine.EngineState.TERMINATED;
@@ -19,7 +18,6 @@ import java.util.PriorityQueue;
 public class TickingEngine implements Runnable {
 	public enum EngineState {
 		CREATED,
-		INITIALIZING,
 		RUNNING,
 		PAUSED,
 		EXITING,
@@ -27,6 +25,7 @@ public class TickingEngine implements Runnable {
 	};
 
 	public static final boolean MAY_SLEEP_BETWEEN_ITERATIONS = true;
+	public static final int DEFAULT_TICKS_PER_ITERATION = 10000;
 
 	private final int ticksPerIteration;
 	private EngineState state;
@@ -37,9 +36,11 @@ public class TickingEngine implements Runnable {
 	private float currentTickScale;
 
 	private boolean tickScaleIsDirty;
+	private final boolean exitWhenDone;
 
-	public TickingEngine(int ticksPerIteration) {
+	public TickingEngine(int ticksPerIteration, boolean exitWhenDone) {
 		this.ticksPerIteration = ticksPerIteration;
+		this.exitWhenDone = exitWhenDone;
 		tasks = new PriorityQueue<>((left, right) -> {
 			return (int) (left.getTimeOfNextTick() - right.getTimeOfNextTick());
 		});
@@ -67,10 +68,8 @@ public class TickingEngine implements Runnable {
 		if (state == TERMINATED) {
 			return;
 		}
-		state = INITIALIZING;
-		currentEngineTick = 0;
-		initializeTasks(currentEngineTick, currentTickScale);
 		state = RUNNING;
+		currentEngineTick = 0;
 		stamp = now();
 		while (state != EXITING) {
 			while (state == RUNNING) {
@@ -97,12 +96,6 @@ public class TickingEngine implements Runnable {
 		state = TERMINATED;
 	}
 
-	private void initializeTasks(long currentEngineTick, float tickScale) {
-		for (final TickableTask task : tasks) {
-			task.initialize(currentEngineTick, tickScale);
-		}
-	}
-
 	private void updateTickScaleIfNecessary(float currentTickScale) {
 		if (tickScaleIsDirty) {
 			for (final TickableTask task : tasks) {
@@ -114,10 +107,10 @@ public class TickingEngine implements Runnable {
 	private void includeNewTasksIfAny(long currentEngineTick, float tickScale) {
 		if (newTasks.size() > 0) {
 			synchronized (newTasks) {
-				for (final TickableTask task : newTasks) {
-					task.initialize(currentEngineTick, tickScale);
+				newTasks.stream().forEachOrdered(task -> {
+					task.initialize(this, currentEngineTick, tickScale);
 					tasks.add(task);
-				}
+				});
 				newTasks.clear();
 			}
 		}
@@ -131,6 +124,9 @@ public class TickingEngine implements Runnable {
 				tasks.add(task);
 			} else {
 				task.terminate();
+				if (exitWhenDone && tasks.size() == 0) {
+					stop();
+				}
 			}
 		}
 	}

@@ -13,6 +13,7 @@ import org.junit.Test;
 import net.thomas.kata.ugp.engine.TickingEngine.EngineState;
 
 public class TickingEngineUnitTest {
+	private static final boolean KEEP_RUNNING_WHEN_DONE = false;
 	private static final int SOME_TIME_SCALE = 2;
 	private static final int EXECUTION_TIMEOUT = 10;
 	private static final int SHUTDOWN_TIMEOUT = 1000;
@@ -24,7 +25,7 @@ public class TickingEngineUnitTest {
 
 	@Before
 	public void setUpEngine() {
-		engine = new TickingEngine(MINIMUM_TICK_SIZE_IN_MICROSECONDS);
+		engine = new TickingEngine(MINIMUM_TICK_SIZE_IN_MICROSECONDS, KEEP_RUNNING_WHEN_DONE);
 	}
 
 	@Test(timeout = 1000)
